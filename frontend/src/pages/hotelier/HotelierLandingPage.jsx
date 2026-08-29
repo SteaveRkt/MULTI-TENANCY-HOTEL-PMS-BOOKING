@@ -7,14 +7,10 @@ import {
   BarChart3,
   Users2,
   ShieldCheck,
-  Zap,
-  ArrowRight,
   CheckCircle2,
   Layers,
   Sparkles,
   ChevronRight,
-  BedDouble,
-  ArrowLeft,
   Menu,
   X,
 } from 'lucide-react'
@@ -170,16 +166,14 @@ export default function HotelierLandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
             <Link
               to="/register"
-              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-extrabold text-base shadow-md hover:shadow-xl hover:shadow-primary-600/25 transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center px-7 py-3.5 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-extrabold text-base shadow-md hover:shadow-xl hover:shadow-primary-600/25 transition-all cursor-pointer"
             >
-              <UserPlus size={18} />
               S'inscrire (Créer mon hôtel)
             </Link>
             <Link
               to="/login"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-white font-bold text-base border border-slate-200 dark:border-slate-700 shadow-sm transition"
+              className="w-full sm:w-auto flex items-center justify-center px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-white font-bold text-base border border-slate-200 dark:border-slate-700 shadow-sm transition"
             >
-              <LogIn size={18} />
               Se connecter au PMS
             </Link>
           </div>
