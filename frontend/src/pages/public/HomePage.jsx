@@ -65,7 +65,7 @@ const FEATURED_DESTINATIONS = [
   },
   {
     city: 'Toliara',
-    tag: 'Côte Est & Balnéaire',
+    tag: 'Partie Sud ',
     desc: 'Séjours en bord de mer et détente tropicale',
     image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRt_SwLkt5dTn5vfo39EXSwOzuRZWJAjuz7HmH-aohLg&s=10',
   },
@@ -520,7 +520,10 @@ export default function HomePage() {
                         min={0}
                         step={5000}
                         value={filterMinPrice}
-                        onChange={(e) => setFilterMinPrice(Math.max(0, Number(e.target.value)))}
+                        onChange={(e) => {
+                          const val = Math.max(0, Number(e.target.value))
+                          setFilterMinPrice(Math.min(val, filterMaxPrice))
+                        }}
                         className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-bold outline-none focus:border-primary-500"
                       />
                     </div>
@@ -531,28 +534,68 @@ export default function HomePage() {
                         min={0}
                         step={5000}
                         value={filterMaxPrice}
-                        onChange={(e) => setFilterMaxPrice(Math.max(0, Number(e.target.value)))}
+                        onChange={(e) => {
+                          const val = Math.max(0, Number(e.target.value))
+                          setFilterMaxPrice(Math.max(val, filterMinPrice))
+                        }}
                         className="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-bold outline-none focus:border-primary-500"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-2">
-                    <input
-                      type="range"
-                      min={0}
-                      max={500000}
-                      step={5000}
-                      value={filterMaxPrice}
-                      onChange={(e) => setFilterMaxPrice(Number(e.target.value))}
-                      className="w-full accent-primary-600 cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[10px] font-medium text-slate-400">
-                      <span>0 Ar</span>
-                      <span>Max : {new Intl.NumberFormat('fr-FR').format(filterMaxPrice)} Ar</span>
+                  {/* Dual range sliders */}
+                  <div className="pt-3 space-y-3">
+                    {/* Min slider */}
+                    <div>
+                      <div className="flex justify-between text-[10px] font-medium text-slate-400 mb-1">
+                        <span>Prix min</span>
+                        <span className="text-primary-600 dark:text-primary-400 font-bold">
+                          {new Intl.NumberFormat('fr-FR').format(filterMinPrice)} Ar
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={500000}
+                        step={5000}
+                        value={filterMinPrice}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          setFilterMinPrice(Math.min(val, filterMaxPrice - 5000))
+                        }}
+                        className="w-full accent-primary-600 cursor-pointer"
+                      />
+                    </div>
+                    {/* Max slider */}
+                    <div>
+                      <div className="flex justify-between text-[10px] font-medium text-slate-400 mb-1">
+                        <span>Prix max</span>
+                        <span className="text-primary-600 dark:text-primary-400 font-bold">
+                          {new Intl.NumberFormat('fr-FR').format(filterMaxPrice)} Ar
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={500000}
+                        step={5000}
+                        value={filterMaxPrice}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          setFilterMaxPrice(Math.max(val, filterMinPrice + 5000))
+                        }}
+                        className="w-full accent-primary-600 cursor-pointer"
+                      />
+                    </div>
+                    {/* Range summary */}
+                    <div className="flex justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5">
+                      <span>🏷️ {new Intl.NumberFormat('fr-FR').format(filterMinPrice)} Ar</span>
+                      <span>→</span>
+                      <span>{new Intl.NumberFormat('fr-FR').format(filterMaxPrice)} Ar 🏷️</span>
                     </div>
                   </div>
                 </div>
+
 
                 {/* 2. Room Type */}
                 <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
