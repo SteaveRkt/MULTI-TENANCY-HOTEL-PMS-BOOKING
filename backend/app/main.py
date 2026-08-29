@@ -33,13 +33,13 @@ _allowed_origins = [
     "http://127.0.0.1:3000",
 ]
 if _frontend_url:
-    _allowed_origins.append(_frontend_url)
+    _allowed_origins.append(_frontend_url.rstrip("/"))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
-    # Accepte tous les sous-domaines *.vercel.app et le domaine personnalisé
-    allow_origin_regex=r"https://(.*\.vercel\.app|.*\.onrender\.com)",
+    # Accepte tous les sous-domaines *.vercel.app et *.onrender.com (HTTP et HTTPS)
+    allow_origin_regex=r"https?://.*\.vercel\.app|https?://.*\.onrender\.com|http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
