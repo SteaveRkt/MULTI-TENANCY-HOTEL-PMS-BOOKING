@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Building2,
@@ -13,22 +14,24 @@ import {
   Sparkles,
   ChevronRight,
   BedDouble,
-  Globe,
-  LogIn,
-  UserPlus,
+  ArrowLeft,
+  Menu,
+  X,
 } from 'lucide-react'
 import ThemeToggle from '../../components/ui/ThemeToggle'
 
 export default function HotelierLandingPage() {
   const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors">
       {/* Top Navigation for Hoteliers */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary-600 text-white shadow-sm">
+          {/* Logo */}
+          <Link to="/hotelier" className="flex items-center gap-3 group">
+            <div className="p-2 rounded-xl bg-primary-600 text-white shadow-sm group-hover:bg-primary-700 transition-colors">
               <Building2 size={20} />
             </div>
             <div>
@@ -39,46 +42,106 @@ export default function HotelierLandingPage() {
                 Solution Hôtelière
               </span>
             </div>
-          </div>
+          </Link>
 
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
+          {/* Natural Desktop Nav Links (Simple words without icons) */}
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
             <a href="#features" className="hover:text-primary-600 dark:hover:text-primary-400 transition">
               Fonctionnalités
             </a>
             <a href="#services" className="hover:text-primary-600 dark:hover:text-primary-400 transition">
-              Services & Modules
+              Services
             </a>
             <a href="#how-it-works" className="hover:text-primary-600 dark:hover:text-primary-400 transition">
               Comment ça marche
             </a>
             <Link
               to="/"
-              className="flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 transition"
+              className="text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition"
             >
-              <Globe size={13} /> Portail Voyageurs
+              Portail Voyageurs
             </Link>
-          </div>
+          </nav>
 
-          {/* Action CTAs */}
-          <div className="flex items-center gap-2.5">
+          {/* Action CTAs (Desktop) */}
+          <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             <Link
               to="/login"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
-              <LogIn size={15} />
-              <span className="hidden sm:inline">Se connecter</span>
+              Se connecter
             </Link>
             <Link
               to="/register"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs sm:text-sm font-extrabold shadow-sm hover:shadow-md hover:shadow-primary-600/20 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-sm font-bold shadow-xs hover:shadow-md hover:shadow-primary-600/20 transition-all cursor-pointer"
             >
-              <UserPlus size={15} />
-              <span>S'inscrire</span>
+              S'inscrire
             </Link>
           </div>
+
+          {/* Mobile Actions: ThemeToggle + Hamburger Menu Button */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              aria-label="Menu de navigation"
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
+
+        {/* Simple Mobile Hamburger Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 pt-3 pb-6 space-y-3 transition-all shadow-xl">
+            <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              Fonctionnalités
+            </a>
+            <a
+              href="#services"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              Services
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              Comment ça marche
+            </a>
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/50 transition"
+            >
+              ← Retour au Portail Voyageurs
+            </Link>
+            <div className="pt-2 grid grid-cols-2 gap-2">
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition text-center"
+              >
+                Se connecter
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold transition text-center shadow-xs"
+              >
+                S'inscrire
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}

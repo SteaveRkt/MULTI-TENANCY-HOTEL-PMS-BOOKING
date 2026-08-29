@@ -26,38 +26,36 @@ export default function PublicNavbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav links & Actions */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* Desktop Nav links & Actions (Natural, simple words without icons) */}
+          <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300">
             <a
               href="#destinations"
-              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition"
+              className="hover:text-primary-600 dark:hover:text-primary-400 transition"
             >
               Destinations
             </a>
             <a
               href="#services"
-              className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition"
+              className="hover:text-primary-600 dark:hover:text-primary-400 transition"
             >
-              Services Voyageurs
+              Services
             </a>
             <Link
               to="/track"
-              className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition"
+              className="hover:text-primary-600 dark:hover:text-primary-400 transition"
             >
-              <Search size={15} />
               Suivre ma réservation
             </Link>
-          </div>
+          </nav>
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
 
             <Link
               to="/hotelier"
-              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition shadow-xs cursor-pointer"
+              className="hidden sm:inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold transition shadow-xs cursor-pointer"
             >
-              <Building2 size={15} className="text-primary-600 dark:text-primary-400" />
-              <span>Espace Hôtelier & Pro</span>
+              Espace Hôtelier
             </Link>
 
             {/* Mobile Menu Button */}
@@ -67,7 +65,7 @@ export default function PublicNavbar() {
                 className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 aria-label="Menu"
               >
-                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
             </div>
           </div>
@@ -76,7 +74,7 @@ export default function PublicNavbar() {
 
       {/* Mobile Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 pt-3 pb-4 space-y-3 transition-colors shadow-lg">
+        <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 pt-3 pb-5 space-y-3 transition-colors shadow-lg">
           <a
             href="#destinations"
             onClick={() => setMobileMenuOpen(false)}
@@ -89,24 +87,24 @@ export default function PublicNavbar() {
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            Services Voyageurs
+            Services
           </a>
           <Link
             to="/track"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="block px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <Search size={16} />
             Suivre ma réservation
           </Link>
-          <Link
-            to="/hotelier"
-            onClick={() => setMobileMenuOpen(false)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-sm transition"
-          >
-            <Building2 size={16} className="text-primary-600" />
-            Accéder à l'Espace Hôtelier & Pro
-          </Link>
+          <div className="pt-2">
+            <Link
+              to="/hotelier"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold shadow-xs transition"
+            >
+              Espace Hôtelier
+            </Link>
+          </div>
         </div>
       )}
     </header>

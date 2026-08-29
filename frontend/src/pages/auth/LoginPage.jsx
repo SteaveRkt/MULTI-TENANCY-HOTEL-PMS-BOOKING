@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Building2, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getApiErrorMessage } from '../../api/client'
 import ThemeToggle from '../../components/ui/ThemeToggle'
@@ -64,10 +64,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900 transition-colors">
       {/* Left branding panel (Desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0b1c30] via-[#102a4a] to-[#0058be]/40 flex-col justify-center px-16 relative overflow-hidden text-white">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0b1c30] via-[#102a4a] to-[#0058be]/40 flex-col justify-between p-12 relative overflow-hidden text-white">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-500/20 via-transparent to-transparent" />
-        <div className="relative z-10 max-w-lg">
-          <div className="flex items-center gap-3 mb-12">
+        
+        <div className="relative z-10">
+          <Link
+            to="/hotelier"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors mb-8"
+          >
+            <ArrowLeft size={16} />
+            <span>Retour à l'espace hôtelier</span>
+          </Link>
+          <div className="flex items-center gap-3 mb-10">
             <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-white">
               <Building2 size={28} />
             </div>
@@ -100,9 +108,16 @@ export default function LoginPage() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative">
-        {/* Top right theme toggle */}
-        <div className="absolute top-6 right-6">
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative pt-20">
+        {/* Top header navigation */}
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
+          <Link
+            to="/hotelier"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            <ArrowLeft size={16} />
+            <span>Retour à l'espace hôtelier</span>
+          </Link>
           <ThemeToggle />
         </div>
 
