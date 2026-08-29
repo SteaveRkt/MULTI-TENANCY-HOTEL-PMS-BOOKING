@@ -14,8 +14,8 @@ import { Card } from '../../components/ui/Card'
 
 const MOBILE_PROVIDERS = [
   { value: 'ORANGE_MONEY', label: 'Orange Money' },
-  { value: 'M_PESA', label: 'M-Pesa' },
-  { value: 'MTN', label: 'MTN Mobile Money' },
+  { value: 'M_VOLA', label: 'M-VOLA' },
+  { value: 'AIRTEL MONEY', label: 'Airtel Money' },
 ]
 
 export default function PaymentPage() {

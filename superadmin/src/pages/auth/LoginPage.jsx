@@ -6,8 +6,8 @@ import { getApiErrorMessage } from '../../api/client'
 import ThemeToggle from '../../components/ui/ThemeToggle'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('superadmin@hotelpms.com')
-  const [password, setPassword] = useState('superadmin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
