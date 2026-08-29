@@ -21,7 +21,9 @@ class LoginRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: uuid.UUID
-    tenant_id: uuid.UUID
+    tenant_id: Optional[uuid.UUID] = None
+    hotel_name: Optional[str] = None
+    tenant_name: Optional[str] = None
     first_name: str
     last_name: str
     email: EmailStr

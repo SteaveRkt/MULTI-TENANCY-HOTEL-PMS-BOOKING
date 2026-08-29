@@ -23,6 +23,7 @@ import {
 } from 'recharts'
 import { dashboardAPI } from '../../api/client'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import KpiCard from '../../components/ui/KpiCard'
 import Badge from '../../components/ui/Badge'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card'
@@ -67,6 +68,7 @@ const fmt = (n) => {
 
 export default function DashboardPage() {
   const { isDark } = useTheme()
+  const { user } = useAuth()
   const [range, setRange] = useState('today')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -91,9 +93,18 @@ export default function DashboardPage() {
       {/* Header & Date Range Filter */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">Tableau de bord</h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">
+              Tableau de bord
+            </h1>
+            {user?.hotel_name && (
+              <span className="px-3 py-1 text-xs font-extrabold bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300 rounded-xl border border-primary-100 dark:border-primary-900/60 shadow-subtle">
+                {user.hotel_name}
+              </span>
+            )}
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Aperçu des performances hôtelières et financières
+            {user?.hotel_name ? `${user.hotel_name} • ` : ''}Aperçu des performances hôtelières et financières
           </p>
         </div>
 

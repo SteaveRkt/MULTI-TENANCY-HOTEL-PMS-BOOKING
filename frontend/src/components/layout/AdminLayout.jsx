@@ -9,7 +9,7 @@ export default function AdminLayout() {
   const { isAuthenticated, user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated || user?.role === 'SUPER_ADMIN') return <Navigate to="/login" replace />
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors">
@@ -32,7 +32,9 @@ export default function AdminLayout() {
               <div className="p-1.5 rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400">
                 <Building2 size={18} />
               </div>
-              <span className="font-extrabold font-heading text-slate-900 dark:text-white text-base">HotelPMS</span>
+              <span className="font-extrabold font-heading text-primary-700 dark:text-primary-300 text-sm sm:text-base truncate max-w-[170px]" title={user?.hotel_name || user?.tenant_name || 'Établissement'}>
+                {user?.hotel_name || user?.tenant_name || 'Établissement'}
+              </span>
             </div>
           </div>
 

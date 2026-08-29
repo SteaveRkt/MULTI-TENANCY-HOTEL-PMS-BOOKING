@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, rooms, customers, reservation, dashboard, users, public
+from app.api.routes import auth, rooms, customers, reservation, dashboard, users, public, super_admin
 from app.core.database import Base, engine
 # Import all models so metadata is populated
 from app.models import tenant, user, room, customer, reservation as res_model, payment
@@ -27,6 +27,8 @@ _frontend_url = os.getenv("FRONTEND_URL", "")
 _allowed_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
@@ -51,6 +53,7 @@ app.include_router(reservation.router)
 app.include_router(dashboard.router)
 app.include_router(users.router)
 app.include_router(public.router)
+app.include_router(super_admin.router)
 
 
 @app.get("/")

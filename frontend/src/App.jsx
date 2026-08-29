@@ -9,7 +9,10 @@ import HomePage from './pages/public/HomePage'
 import CheckoutPage from './pages/public/CheckoutPage'
 import PaymentPage from './pages/public/PaymentPage'
 import TrackBookingPage from './pages/public/TrackBookingPage'
+
+import HotelierLandingPage from './pages/hotelier/HotelierLandingPage'
 import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
 
 import DashboardPage from './pages/admin/DashboardPage'
 import RoomsStatusGridPage from './pages/admin/RoomsStatusGridPage'
@@ -24,7 +27,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public routes */}
+            {/* 1. Portail Public (Voyageurs & Réservations directes) */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
@@ -32,10 +35,12 @@ export default function App() {
               <Route path="/track" element={<TrackBookingPage />} />
             </Route>
 
-            {/* Auth */}
+            {/* 2. Portail Hôtelier (Présentation PMS, Inscription, Connexion) */}
+            <Route path="/hotelier" element={<HotelierLandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-            {/* Admin routes (protected) */}
+            {/* 3. Administration PMS (Hôtel individuel - Admin & Réceptionniste) */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />

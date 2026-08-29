@@ -50,13 +50,18 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         {/* Logo & Header */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary-50 border border-primary-100 text-primary-600 dark:bg-primary-950/50 dark:border-primary-900/50 dark:text-primary-400">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="p-2.5 rounded-xl bg-primary-50 border border-primary-100 text-primary-600 dark:bg-primary-950/50 dark:border-primary-900/50 dark:text-primary-400 flex-shrink-0">
               <Building2 size={20} />
             </div>
-            <div>
-              <span className="text-lg font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">HotelPMS</span>
-              <p className="text-[11px] font-medium text-slate-500">Gestion hôtelière</p>
+            <div className="min-w-0 flex-1">
+              <span className="text-base font-extrabold font-heading text-primary-700 dark:text-primary-300 tracking-tight truncate block" title={user?.hotel_name || user?.tenant_name || 'Établissement'}>
+                {user?.hotel_name || user?.tenant_name || 'Établissement'}
+              </span>
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0"></span>
+                Espace Hôtelier PMS
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -103,7 +108,9 @@ export default function Sidebar({ isOpen, onClose }) {
                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                   {user?.first_name} {user?.last_name}
                 </p>
-                <Badge variant={user?.role?.toLowerCase()}>{user?.role}</Badge>
+              <Badge variant={user?.role ? user.role.toLowerCase() : 'default'}>
+                  {user?.role || 'Utilisateur'}
+                </Badge>
               </div>
             </div>
             <button

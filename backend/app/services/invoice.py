@@ -74,6 +74,7 @@ def _generate_pure_python_pdf(
     hotel: Tenant,
     customer: Customer,
     payment: Optional[Payment] = None,
+    staff=None,
 ) -> BytesIO:
     """Fallback PDF generator using PDF 1.4 format without external dependencies."""
     hotel_name = _escape_pdf_str(hotel.name or "Établissement Hôtelier")
@@ -91,6 +92,10 @@ def _generate_pure_python_pdf(
     check_in_str = _escape_pdf_str(_format_date(reservation.check_in))
     check_out_str = _escape_pdf_str(_format_date(reservation.check_out))
     guests_str = _escape_pdf_str(str(reservation.number_of_guests))
+
+    staff_name = _escape_pdf_str(
+        f"{staff.first_name} {staff.last_name}" if staff else "Portail Public (En ligne)"
+    )
     
     try:
         d1 = reservation.check_in if isinstance(reservation.check_in, (date, datetime)) else datetime.fromisoformat(str(reservation.check_in)).date()
@@ -111,33 +116,25 @@ def _generate_pure_python_pdf(
     
     stream_lines = [
         "q",
-        # Top header dark navy banner
         "0.04 0.07 0.16 rg",
         "0 735 595.28 106.89 re f",
-        # Gold accent stripe under header
         "0.96 0.62 0.07 rg",
         "0 732 595.28 3 re f",
-        # Hotel Name
         "1 1 1 rg",
         "BT /F2 20 Tf 40 798 Td (" + hotel_name + ") Tj ET",
         "0.85 0.88 0.92 rg",
         "BT /F1 9.5 Tf 40 780 Td (" + (hotel_address + (", " + hotel_city if hotel_city else "")) + ") Tj ET",
-        # Invoice Title
         "1 1 1 rg",
         "BT /F2 15 Tf 400 802 Td (FACTURE ACQUITTEE) Tj ET",
         "0.96 0.62 0.07 rg",
-        "BT /F2 10 Tf 400 786 Td (N " + f"FAC-{res_code}" + ") Tj ET",
+        "BT /F2 10 Tf 400 786 Td (N FAC-" + res_code + ") Tj ET",
         "0.85 0.88 0.92 rg",
         "BT /F1 9 Tf 400 770 Td (Date: " + pay_date + ") Tj ET",
-        
-        # Green Paid Stamp Banner
         "0.02 0.58 0.41 rg",
         "40 682 515 32 re f",
         "1 1 1 rg",
         "BT /F2 10.5 Tf 52 694 Td (STATUT : FACTURE REGLEE EN INTEGRALITE) Tj ET",
         "BT /F1 9 Tf 360 694 Td (Ref: " + pay_txn + ") Tj ET",
-        
-        # Customer Card (Left)
         "0.97 0.98 1.0 rg",
         "40 568 245 96 re f",
         "0.85 0.88 0.92 RG 1 w",
@@ -149,8 +146,6 @@ def _generate_pure_python_pdf(
         "BT /F1 9 Tf 52 608 Td (Email : " + cust_email + ") Tj ET",
         "BT /F1 9 Tf 52 592 Td (Tel : " + cust_phone + ") Tj ET",
         "BT /F1 8.5 Tf 52 576 Td (Dossier : " + res_code + ") Tj ET",
-        
-        # Stay Details Card (Right)
         "0.97 0.98 1.0 rg",
         "310 568 245 96 re f",
         "0.85 0.88 0.92 RG 1 w",
@@ -162,8 +157,6 @@ def _generate_pure_python_pdf(
         "BT /F1 9 Tf 322 608 Td (Arrivee : " + check_in_str + " | Depart : " + check_out_str + ") Tj ET",
         "BT /F1 9 Tf 322 592 Td (Duree : " + str(nights) + " nuitee(s) - " + guests_str + " voyageur(s)) Tj ET",
         "BT /F1 8.5 Tf 322 576 Td (Reglement : Integralement percu) Tj ET",
-        
-        # Table Header
         "0.10 0.15 0.25 rg",
         "40 520 515 24 re f",
         "1 1 1 rg",
@@ -171,8 +164,6 @@ def _generate_pure_python_pdf(
         "BT /F2 9.5 Tf 270 528 Td (Tarif / nuit) Tj ET",
         "BT /F2 9.5 Tf 380 528 Td (Duree) Tj ET",
         "BT /F2 9.5 Tf 470 528 Td (Montant Total) Tj ET",
-        
-        # Table Body Row
         "1.0 1.0 1.0 rg",
         "40 465 515 55 re f",
         "0.88 0.90 0.94 RG 0.75 w",
@@ -185,8 +176,6 @@ def _generate_pure_python_pdf(
         "BT /F1 9.5 Tf 270 490 Td (" + price_night_str + ") Tj ET",
         "BT /F1 9.5 Tf 380 490 Td (" + str(nights) + " nuit(s)) Tj ET",
         "BT /F2 10 Tf 470 490 Td (" + total_str + ") Tj ET",
-        
-        # Payment Recap Box (Left)
         "0.97 0.98 1.0 rg",
         "40 365 245 80 re f",
         "0.85 0.88 0.92 RG 1 w",
@@ -198,8 +187,8 @@ def _generate_pure_python_pdf(
         "BT /F1 8.5 Tf 52 394 Td (Ref. Transaction : " + pay_txn + ") Tj ET",
         "0.02 0.58 0.41 rg",
         "BT /F2 9 Tf 52 376 Td (Solde du : 0 Ar (Acquitte)) Tj ET",
-        
-        # Total / Recap Card (Right)
+        "0.35 0.40 0.48 rg",
+        "BT /F1 8 Tf 52 362 Td (Encaisse par : " + staff_name + ") Tj ET",
         "0.95 0.96 0.99 rg",
         "310 365 245 80 re f",
         "0.80 0.85 0.92 RG 1 w",
@@ -209,16 +198,12 @@ def _generate_pure_python_pdf(
         "BT /F1 9 Tf 460 425 Td (" + total_str + ") Tj ET",
         "BT /F1 9 Tf 325 407 Td (TVA (0% / Exoneree) :) Tj ET",
         "BT /F1 9 Tf 460 407 Td (0 Ar) Tj ET",
-        
-        # Final Total Highlight in Dark Navy
         "0.06 0.09 0.16 rg",
         "310 365 245 28 re f",
         "1 1 1 rg",
         "BT /F2 10 Tf 325 375 Td (TOTAL TTC ACQUITTE :) Tj ET",
         "0.98 0.75 0.15 rg",
         "BT /F2 11 Tf 445 375 Td (" + total_str + ") Tj ET",
-        
-        # Information Note Box
         "0.97 0.98 1.0 rg",
         "40 245 515 95 re f",
         "0.88 0.90 0.94 RG 1 w",
@@ -230,8 +215,6 @@ def _generate_pure_python_pdf(
         "BT /F1 8.5 Tf 52 288 Td (• Facture acquittee valant recu definitif conformement aux reglementations hotelieres.) Tj ET",
         "BT /F1 8.5 Tf 52 272 Td (• Notre service de conciergerie et reception reste a votre entiere disposition 24h/24.) Tj ET",
         "BT /F1 8.5 Tf 52 256 Td (• Un depot de garantie peut etre requis lors de l'enregistrement a l'hotel.) Tj ET",
-        
-        # Footer
         "0.85 0.88 0.92 RG 1 w",
         "40 85 515 0.1 re S",
         "0.45 0.50 0.58 rg",
@@ -288,10 +271,13 @@ def generate_invoice_pdf(
     hotel: Tenant,
     customer: Customer,
     payment: Optional[Payment] = None,
+    staff=None,
 ) -> BytesIO:
     """
     Generate luxury 5-star style invoice PDF using ReportLab with clean typography and balanced layout.
+    staff: the User who registered/encashed the reservation (for traceability).
     """
+    staff_name = f"{staff.first_name} {staff.last_name}" if staff else "Portail Public (En ligne)"
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
@@ -466,9 +452,9 @@ def generate_invoice_pdf(
         # =============================================================
         # 5. RECAP & PAYMENT BLOCKS (Side-by-side)
         # =============================================================
-        recap_y = row_y - 118
+        recap_y = row_y - 130
         recap_w = (width - 72 - 16) / 2
-        recap_h = 100
+        recap_h = 112
 
         # Left Box: Règlement & Justificatif
         pdf.setFillColor(C_BG_CARD)
@@ -487,7 +473,12 @@ def generate_invoice_pdf(
 
         pdf.setFillColor(C_EMERALD)
         pdf.setFont("Helvetica-Bold", 9.5)
-        pdf.drawString(50, recap_y + 14, "SOLDE RESTANT DÛ : 0 Ar (SOLDÉ)")
+        pdf.drawString(50, recap_y + recap_h - 86, "SOLDE RESTANT DÛ : 0 Ar (SOLDÉ)")
+
+        # Ligne de traçabilité réceptionniste
+        pdf.setFillColor(C_TEXT_MUTED)
+        pdf.setFont("Helvetica", 8)
+        pdf.drawString(50, recap_y + recap_h - 102, f"Encaissé / Établi par : {staff_name}")
 
         # Right Box: Totaux Financiers
         right_recap_x = 36 + recap_w + 16
@@ -559,4 +550,4 @@ def generate_invoice_pdf(
 
     except Exception:
         # Fallback to pure python PDF generation
-        return _generate_pure_python_pdf(reservation, room, hotel, customer, payment)
+        return _generate_pure_python_pdf(reservation, room, hotel, customer, payment, staff=staff)

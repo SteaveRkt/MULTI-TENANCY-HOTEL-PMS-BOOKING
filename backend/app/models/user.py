@@ -15,10 +15,10 @@ class User(Base):
         default=uuid.uuid4,
     )
 
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
 
@@ -60,3 +60,11 @@ class User(Base):
     )
 
     tenant = relationship("Tenant")
+
+    @property
+    def hotel_name(self) -> str | None:
+        return self.tenant.name if self.tenant else None
+
+    @property
+    def tenant_name(self) -> str | None:
+        return self.tenant.name if self.tenant else None

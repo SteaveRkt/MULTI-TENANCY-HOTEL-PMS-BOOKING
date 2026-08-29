@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import uuid
 from app.core.database import get_db
 from app.core.security import decode_access_token
@@ -40,6 +40,7 @@ def get_current_user(
 
     user = (
         db.query(User)
+        .options(joinedload(User.tenant))
         .filter(User.id == user_id)
         .first()
     )
@@ -56,7 +57,7 @@ def get_current_user(
     return user
 def get_current_tenant_id(
     current_user: User = Depends(get_current_user),
-) -> uuid.UUID:
+) -> uuid.UUID | None:
     return current_user.tenant_id
 def require_role(*allowed_roles: str) -> Callable:
     def role_checker(

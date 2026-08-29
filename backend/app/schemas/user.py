@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     last_name: str
     email: EmailStr
     password: str
-    role: Literal["ADMIN", "RECEPTIONIST"] = "RECEPTIONIST"
+    role: Literal["ADMIN", "RECEPTIONIST", "SUPER_ADMIN"] = "RECEPTIONIST"
 
 
 class UserUpdate(BaseModel):
@@ -16,13 +16,15 @@ class UserUpdate(BaseModel):
     last_name: str | None = None
     email: EmailStr | None = None
     password: str | None = None
-    role: Literal["ADMIN", "RECEPTIONIST"] | None = None
+    role: Literal["ADMIN", "RECEPTIONIST", "SUPER_ADMIN"] | None = None
     is_active: bool | None = None
 
 
 class UserResponse(BaseModel):
     id: uuid.UUID
-    tenant_id: uuid.UUID
+    tenant_id: uuid.UUID | None = None
+    hotel_name: str | None = None
+    tenant_name: str | None = None
     first_name: str
     last_name: str
     email: EmailStr

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { reservationsAPI, roomsAPI, customersAPI, getApiErrorMessage } from '../../api/client'
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -19,9 +20,11 @@ import {
   User,
   BedDouble,
   Loader2,
+  Building2,
 } from 'lucide-react'
 
 export default function ReservationsPage() {
+  const { user } = useAuth()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
@@ -338,7 +341,13 @@ export default function ReservationsPage() {
 
   const filteredReservations = reservations.filter((r) => {
     const code = r.reservation_code || ''
-    const matchSearch = code.toLowerCase().includes(searchTerm.toLowerCase())
+    const cust = r.customer_name || ''
+    const staff = r.receptionist_name || ''
+    const query = searchTerm.toLowerCase()
+    const matchSearch =
+      code.toLowerCase().includes(query) ||
+      cust.toLowerCase().includes(query) ||
+      staff.toLowerCase().includes(query)
     const matchStatus = !statusFilter || r.status === statusFilter
     return matchSearch && matchStatus
   })
@@ -355,11 +364,10 @@ export default function ReservationsPage() {
             Planning des Réservations
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Gestion du front-desk, arrivées, départs et encaissements
+            Gestion du front-desk, arrivées, départs et traçabilité des encaissements
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
-        
           <Button onClick={openCreateModal} className="flex items-center gap-2 shadow-sm hover:shadow-md font-bold">
             <Plus size={18} /> Nouvelle Réservation
           </Button>
@@ -397,7 +405,7 @@ export default function ReservationsPage() {
             <Search className="absolute left-3.5 top-3 text-slate-400" size={16} />
             <input
               type="text"
-              placeholder="Rechercher par code (ex: HTL-)..."
+              placeholder="Rechercher par code, client ou réceptionniste..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3.5 py-2 bg-slate-50 dark:bg-slate-900/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
@@ -418,6 +426,7 @@ export default function ReservationsPage() {
                 <th className="py-4 px-5">Code</th>
                 <th className="py-4 px-5">Séjour</th>
                 <th className="py-4 px-5">Dates</th>
+                <th className="py-4 px-5">Agent / Réception</th>
                 <th className="py-4 px-5">Total</th>
                 <th className="py-4 px-5">Statut</th>
                 <th className="py-4 px-5 text-right">Actions</th>
@@ -426,13 +435,13 @@ export default function ReservationsPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/30 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-slate-400">
+                  <td colSpan="7" className="text-center py-10 text-slate-400">
                     Chargement des réservations...
                   </td>
                 </tr>
               ) : filteredReservations.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-slate-400">
+                  <td colSpan="7" className="text-center py-10 text-slate-400">
                     Aucune réservation trouvée pour ce filtre.
                   </td>
                 </tr>
@@ -459,11 +468,26 @@ export default function ReservationsPage() {
                         </span>
                       </td>
                       <td className="py-4 px-5">
-                        <div className="font-semibold text-slate-900 dark:text-white">{r.number_of_guests} personne{r.number_of_guests > 1 ? 's' : ''}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{nights} nuit(s)</div>
+                        <div className="font-semibold text-slate-900 dark:text-white">
+                          {r.customer_name ? r.customer_name : `${r.number_of_guests} pers.`}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          {r.room_number ? `Chambre ${r.room_number} • ` : ''}{nights} nuit(s)
+                        </div>
                       </td>
                       <td className="py-4 px-5 text-slate-600 dark:text-slate-300">
                         <span className="text-slate-900 dark:text-white font-medium">{checkIn}</span> → {checkOut}
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                          <User size={13} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+                          <span className="truncate max-w-[130px]" title={r.receptionist_name || 'Portail Public'}>
+                            {r.receptionist_name || 'Portail Public'}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-medium">
+                          {r.user_id ? 'Au comptoir' : 'En ligne'}
+                        </div>
                       </td>
                       <td className="py-4 px-5 font-bold font-heading text-slate-900 dark:text-white">
                         {new Intl.NumberFormat('fr-FR').format(Math.round(r.total_price))} Ar
@@ -561,6 +585,21 @@ export default function ReservationsPage() {
         size="lg"
       >
         <form onSubmit={handleCreateReservation} className="space-y-5">
+          {/* Traceability Header: Connected Receptionist & Hotel */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-primary-50/80 border border-primary-100 dark:bg-primary-950/40 dark:border-primary-900/40 text-xs text-primary-900 dark:text-primary-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary-200/70 dark:bg-primary-900 text-primary-800 dark:text-primary-300 font-bold flex items-center justify-center text-[10px]">
+                {user?.first_name?.[0]?.toUpperCase() ?? 'U'}
+              </div>
+              <span>
+                Établi par : <strong>{user?.first_name} {user?.last_name}</strong> <span className="text-primary-600 dark:text-primary-400 font-medium">({user?.role === 'ADMIN' ? 'Admin' : 'Réceptionniste'})</span>
+              </span>
+            </div>
+            <span className="font-bold text-[11px] bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-primary-200 dark:border-primary-800">
+              {user?.hotel_name || user?.tenant_name || 'Hôtel'}
+            </span>
+          </div>
+
           {createError && (
             <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-300 text-xs rounded-xl flex items-center gap-2 font-medium">
               <AlertCircle size={16} className="flex-shrink-0" /> {createError}

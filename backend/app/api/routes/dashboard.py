@@ -932,6 +932,11 @@ def get_rooms_status(
                     customer_phone = cust.phone
 
             res_status = "OCCUPIED" if active_reservation.status == "CHECKED_IN" else "RESERVED"
+            receptionist_name = (
+                f"{active_reservation.user.first_name} {active_reservation.user.last_name}"
+                if active_reservation.user
+                else "Portail Public (En ligne)"
+            )
 
             rooms_status.append({
                 **base_info,
@@ -946,6 +951,7 @@ def get_rooms_status(
                     "number_of_guests": active_reservation.number_of_guests,
                     "customer_name": customer_name,
                     "customer_phone": customer_phone,
+                    "receptionist_name": receptionist_name,
                 },
                 "next_reservation": None
             })
@@ -972,6 +978,12 @@ def get_rooms_status(
                 if cust:
                     next_cust_name = f"{cust.first_name} {cust.last_name}".strip()
 
+            next_receptionist_name = (
+                f"{next_reservation.user.first_name} {next_reservation.user.last_name}"
+                if next_reservation.user
+                else "Portail Public (En ligne)"
+            )
+
             next_res_info = {
                 "reservation_id": str(next_reservation.id),
                 "reservation_code": next_reservation.reservation_code,
@@ -979,6 +991,7 @@ def get_rooms_status(
                 "check_out": next_reservation.check_out.isoformat() if hasattr(next_reservation.check_out, 'isoformat') else str(next_reservation.check_out),
                 "status": next_reservation.status,
                 "customer_name": next_cust_name,
+                "receptionist_name": next_receptionist_name,
             }
 
         # 3. Chambre disponible à cette date

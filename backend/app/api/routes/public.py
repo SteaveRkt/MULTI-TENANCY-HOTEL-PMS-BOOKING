@@ -74,12 +74,11 @@ def get_public_available_rooms(
     check_in: date,
     check_out: date,
     guests: int = 1,
+    min_price: float | None = None,
     max_price: float | None = None,
     room_type: str | None = None,
     db: Session = Depends(get_db),
 ):
-
-
     if check_in >= check_out:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -92,13 +91,17 @@ def get_public_available_rooms(
             detail="Number of guests must be at least 1",
         )
 
+    if min_price is not None and min_price < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum price cannot be negative",
+        )
+
     if max_price is not None and max_price < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Maximum price cannot be negative",
         )
-
-
 
     query = (
         db.query(Room)
@@ -113,7 +116,11 @@ def get_public_available_rooms(
         )
     )
 
- 
+    if min_price is not None:
+        query = query.filter(
+            Room.price_per_night >= min_price
+        )
+
     if max_price is not None:
         query = query.filter(
             Room.price_per_night <= max_price
@@ -690,12 +697,17 @@ def get_reservation_invoice(
             detail="Données de la réservation incomplètes",
         )
 
+    staff = None
+    if reservation.user_id:
+        staff = db.query(User).filter(User.id == reservation.user_id).first()
+
     pdf = generate_invoice_pdf(
         reservation=reservation,
         room=room,
         hotel=hotel,
         customer=customer,
         payment=payment,
+        staff=staff,
     )
 
     filename = get_invoice_filename(hotel, reservation)

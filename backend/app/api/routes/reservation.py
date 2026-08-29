@@ -133,6 +133,7 @@ def create_reservation(
         total_price=total_price,
         special_requests=data.special_requests,
         reservation_code=reservation_code,
+        user_id=current_user.id,  # Traçabilité : réceptionniste/admin ayant enregistré
     )
 
     if data.check_in <= date.today() and data.check_out > date.today():
@@ -142,8 +143,29 @@ def create_reservation(
     db.commit()
     db.refresh(reservation)
 
-    return reservation
+    # Charger les relations pour la réponse
+    db.refresh(customer)
+    db.refresh(room)
+    receptionist_name = f"{current_user.first_name} {current_user.last_name}"
 
+    return ReservationResponse(
+        id=reservation.id,
+        reservation_code=reservation.reservation_code,
+        tenant_id=reservation.tenant_id,
+        room_id=reservation.room_id,
+        customer_id=reservation.customer_id,
+        user_id=reservation.user_id,
+        check_in=reservation.check_in,
+        check_out=reservation.check_out,
+        number_of_guests=reservation.number_of_guests,
+        status=reservation.status,
+        total_price=float(reservation.total_price),
+        special_requests=reservation.special_requests,
+        is_paid=False,
+        receptionist_name=receptionist_name,
+        customer_name=f"{customer.first_name} {customer.last_name}",
+        room_number=room.number,
+    )
 
 
 @router.post(
@@ -288,8 +310,15 @@ def get_reservations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    query = db.query(Reservation).filter(
-        Reservation.tenant_id == current_user.tenant_id
+    from sqlalchemy.orm import joinedload
+    query = (
+        db.query(Reservation)
+        .options(
+            joinedload(Reservation.customer),
+            joinedload(Reservation.room),
+            joinedload(Reservation.user),
+        )
+        .filter(Reservation.tenant_id == current_user.tenant_id)
     )
     if status:
         query = query.filter(Reservation.status == status)
@@ -310,6 +339,18 @@ def get_reservations(
 
     result = []
     for r in reservations:
+        # Traçabilité réceptionniste
+        if r.user_id and r.user:
+            receptionist_name = f"{r.user.first_name} {r.user.last_name}"
+        else:
+            receptionist_name = "Portail Public (En ligne)"
+
+        customer_name = None
+        if r.customer:
+            customer_name = f"{r.customer.first_name} {r.customer.last_name}"
+
+        room_number = r.room.number if r.room else None
+
         result.append(
             ReservationResponse(
                 id=r.id,
@@ -317,6 +358,7 @@ def get_reservations(
                 tenant_id=r.tenant_id,
                 room_id=r.room_id,
                 customer_id=r.customer_id,
+                user_id=r.user_id,
                 check_in=r.check_in,
                 check_out=r.check_out,
                 number_of_guests=r.number_of_guests,
@@ -324,6 +366,9 @@ def get_reservations(
                 total_price=float(r.total_price),
                 special_requests=r.special_requests,
                 is_paid=r.id in paid_ids,
+                receptionist_name=receptionist_name,
+                customer_name=customer_name,
+                room_number=room_number,
             )
         )
     return result
@@ -338,8 +383,14 @@ def get_reservation(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    from sqlalchemy.orm import joinedload
     reservation = (
         db.query(Reservation)
+        .options(
+            joinedload(Reservation.customer),
+            joinedload(Reservation.room),
+            joinedload(Reservation.user),
+        )
         .filter(
             Reservation.id == reservation_id,
             Reservation.tenant_id == current_user.tenant_id,
@@ -363,12 +414,24 @@ def get_reservation(
         is not None
     )
 
+    if reservation.user_id and reservation.user:
+        receptionist_name = f"{reservation.user.first_name} {reservation.user.last_name}"
+    else:
+        receptionist_name = "Portail Public (En ligne)"
+
+    customer_name = None
+    if reservation.customer:
+        customer_name = f"{reservation.customer.first_name} {reservation.customer.last_name}"
+
+    room_number = reservation.room.number if reservation.room else None
+
     return ReservationResponse(
         id=reservation.id,
         reservation_code=reservation.reservation_code,
         tenant_id=reservation.tenant_id,
         room_id=reservation.room_id,
         customer_id=reservation.customer_id,
+        user_id=reservation.user_id,
         check_in=reservation.check_in,
         check_out=reservation.check_out,
         number_of_guests=reservation.number_of_guests,
@@ -376,6 +439,9 @@ def get_reservation(
         total_price=float(reservation.total_price),
         special_requests=reservation.special_requests,
         is_paid=is_paid,
+        receptionist_name=receptionist_name,
+        customer_name=customer_name,
+        room_number=room_number,
     )
 
 
@@ -687,10 +753,8 @@ def delete_reservation(
 def get_reservation_invoice_admin(
     reservation_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role("ADMIN", "RECEPTIONIST")),
 ):
-    require_role(current_user, ["ADMIN", "RECEPTIONIST"])
-
     reservation = (
         db.query(Reservation)
         .filter(
@@ -734,12 +798,20 @@ def get_reservation_invoice_admin(
             detail="Données de la réservation incomplètes",
         )
 
+    # Charger le réceptionniste ayant créé la réservation
+    staff = None
+    if reservation.user_id:
+        staff = db.query(User).filter(User.id == reservation.user_id).first()
+    if not staff:
+        staff = current_user  # fallback: celui qui télécharge
+
     pdf = generate_invoice_pdf(
         reservation=reservation,
         room=room,
         hotel=hotel,
         customer=customer,
         payment=payment,
+        staff=staff,
     )
 
     filename = get_invoice_filename(hotel, reservation)

@@ -15,12 +15,19 @@ export function AuthProvider({ children }) {
   })
   const [loading, setLoading] = useState(false)
 
-  // On initial load with token but missing user, fetch user profile
+  // On mount or token change, fetch user profile to keep hotel_name and data in sync
   useEffect(() => {
-    if (token && !user) {
+    if (token) {
       authAPI
         .me()
         .then((res) => {
+          if (res.data.role === 'SUPER_ADMIN') {
+            localStorage.removeItem('hotel_token')
+            localStorage.removeItem('hotel_user')
+            setToken(null)
+            setUser(null)
+            return
+          }
           setUser(res.data)
           localStorage.setItem('hotel_user', JSON.stringify(res.data))
         })
@@ -31,16 +38,13 @@ export function AuthProvider({ children }) {
           setUser(null)
         })
     }
-  }, [token, user])
+  }, [token])
 
   const login = useCallback(async (email, password) => {
     setLoading(true)
     try {
       const res = await authAPI.login({ email, password })
       const { access_token, user: userData } = res.data
-
-      localStorage.setItem('hotel_token', access_token)
-      setToken(access_token)
 
       let userObj = userData
       if (!userObj) {
@@ -49,6 +53,14 @@ export function AuthProvider({ children }) {
         userObj = meRes.data
       }
 
+      if (userObj.role === 'SUPER_ADMIN') {
+        throw new Error(
+          "Accès refusé. Les comptes Super Admin ne peuvent pas se connecter à l'espace de gestion hôtelière. Veuillez vous connecter sur le portail Super Admin."
+        )
+      }
+
+      localStorage.setItem('hotel_token', access_token)
+      setToken(access_token)
       localStorage.setItem('hotel_user', JSON.stringify(userObj))
       setUser(userObj)
       return userObj
@@ -96,8 +108,10 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
   const isAdmin = user?.role === 'ADMIN'
-  const isAuthenticated = !!token
+  const isReceptionist = user?.role === 'RECEPTIONIST'
+  const isAuthenticated = !!token && user?.role !== 'SUPER_ADMIN'
 
   return (
     <AuthContext.Provider
@@ -107,7 +121,9 @@ export function AuthProvider({ children }) {
         login,
         logout,
         registerHotel,
+        isSuperAdmin,
         isAdmin,
+        isReceptionist,
         isAuthenticated,
         loading,
       }}

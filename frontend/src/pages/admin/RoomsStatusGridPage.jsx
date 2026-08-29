@@ -865,6 +865,12 @@ export default function RoomsStatusGridPage() {
                       {fmt(selectedRoomDetail.current_reservation.total_price)}
                     </span>
                   </div>
+                  <div className="flex justify-between pt-1 border-t border-amber-200/50 dark:border-amber-900/30">
+                    <span className="text-slate-600 dark:text-slate-400">Enregistré par :</span>
+                    <span className="font-semibold text-primary-700 dark:text-primary-300">
+                      {selectedRoomDetail.current_reservation.receptionist_name || 'Portail Public'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -885,6 +891,12 @@ export default function RoomsStatusGridPage() {
                   <span className="text-slate-500">Arrivée :</span>
                   <span className="font-semibold text-primary-700 dark:text-primary-300">
                     {new Date(selectedRoomDetail.next_reservation.check_in).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Enregistré par :</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                    {selectedRoomDetail.next_reservation.receptionist_name || 'Portail Public'}
                   </span>
                 </div>
               </div>

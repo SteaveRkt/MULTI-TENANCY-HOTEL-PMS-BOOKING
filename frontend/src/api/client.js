@@ -105,4 +105,15 @@ export const publicAPI = {
   getInvoice: (code) => api.get(`/api/public/reservations/${code}/invoice`, { responseType: 'blob' }),
 }
 
+export const superAdminAPI = {
+  getStats: () => api.get('/api/super-admin/stats'),
+  getHotels: (params) => api.get('/api/super-admin/hotels', { params }),
+  createHotel: (data) => api.post('/api/super-admin/hotels', data),
+  updateHotel: (id, data) => api.put(`/api/super-admin/hotels/${id}`, data),
+  deleteHotel: (id) => api.delete(`/api/super-admin/hotels/${id}`),
+  getUsers: (params) => api.get('/api/super-admin/users', { params }),
+  toggleUserStatus: (id) => api.patch(`/api/super-admin/users/${id}/status`),
+  getReservations: (params) => api.get('/api/super-admin/reservations', { params }),
+}
+
 export default api

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
@@ -90,6 +90,7 @@ def login(
 ):
     user = (
         db.query(User)
+        .options(joinedload(User.tenant))
         .filter(User.email == data.email)
         .first()
     )
@@ -113,7 +114,7 @@ def login(
     token = create_access_token(
         {
             "sub": str(user.id),
-            "tenant_id": str(user.tenant_id),
+            "tenant_id": str(user.tenant_id) if user.tenant_id else None,
             "role": user.role,
         }
     )

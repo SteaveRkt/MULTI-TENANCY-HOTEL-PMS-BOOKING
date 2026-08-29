@@ -18,13 +18,18 @@ class ReservationResponse(BaseModel):
     tenant_id: uuid.UUID
     room_id: uuid.UUID
     customer_id: uuid.UUID
+    user_id: uuid.UUID | None = None
     check_in: date
     check_out: date
     number_of_guests: int
     status: str
     total_price: float
-    special_requests: str | None
+    special_requests: str | None = None
     is_paid: bool = False
+    # Computed traceability fields (populated manually in routes)
+    receptionist_name: str | None = None
+    customer_name: str | None = None
+    room_number: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

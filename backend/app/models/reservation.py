@@ -74,6 +74,13 @@ class Reservation(Base):
         default=lambda:datetime.now(UTC),
     )
 
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
     tenant = relationship("Tenant")
     room = relationship("Room")
     customer = relationship("Customer")
+    user = relationship("User", foreign_keys=[user_id])
