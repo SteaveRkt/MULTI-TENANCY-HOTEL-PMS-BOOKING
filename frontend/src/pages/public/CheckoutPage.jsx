@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { BedDouble, Calendar, Users, AlertCircle, Loader2, ChevronLeft } from 'lucide-react'
 import { publicAPI, getApiErrorMessage } from '../../api/client'
 import { Card, CardContent } from '../../components/ui/Card'
+import RoomImageSlider from '../../components/public/RoomImageSlider'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
@@ -193,14 +194,7 @@ export default function CheckoutPage() {
               Récapitulatif du séjour
             </h2>
 
-            <div className="h-28 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center mb-4 shadow-sm relative overflow-hidden">
-              <BedDouble size={44} className="text-white/20" />
-              <div className="absolute top-3 left-3">
-                <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold border border-white/10">
-                  {room.room_type || room.type}
-                </span>
-              </div>
-            </div>
+            <RoomImageSlider room={room} className="h-36 rounded-2xl mb-4" />
 
             <div className="space-y-1 text-sm mb-4">
               <p className="text-slate-900 dark:text-white font-bold font-heading text-base">

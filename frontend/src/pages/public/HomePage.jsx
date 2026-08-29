@@ -26,6 +26,7 @@ import {
   Compass,
 } from 'lucide-react'
 import { publicAPI, getApiErrorMessage } from '../../api/client'
+import RoomImageSlider from '../../components/public/RoomImageSlider'
 
 const ROOM_TYPES = [
   { value: '', label: 'Tous les types' },
@@ -698,28 +699,8 @@ export default function HomePage() {
                           key={roomId}
                           className="bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover dark:bg-slate-900 dark:border-slate-800 rounded-2xl overflow-hidden transition-all duration-200 flex flex-col justify-between group"
                         >
-                          <div className="h-40 bg-gradient-to-br from-slate-850 to-slate-950 text-white relative p-4 flex flex-col justify-between">
-                            <div className="flex items-center justify-between z-10">
-                              {room.hotel_name && (
-                                <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-semibold border border-white/10 truncate max-w-[170px]">
-                                  {room.hotel_name}
-                                </span>
-                              )}
-                              <span className="px-3 py-1 rounded-full bg-primary-500/80 backdrop-blur-md text-white text-xs font-bold border border-primary-400/20">
-                                {roomType}
-                              </span>
-                            </div>
-
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                              <BedDouble size={75} className="text-white" />
-                            </div>
-
-                            <div className="z-10">
-                              <span className="text-xl sm:text-2xl font-black font-heading text-white">
-                                Chambre {roomNumber}
-                              </span>
-                            </div>
-                          </div>
+                          {/* Image slider Unsplash interactive */}
+                          <RoomImageSlider room={room} />
 
                           <div className="p-5 flex-1 flex flex-col justify-between">
                             <div>
