@@ -58,11 +58,19 @@ htmlcov/
 backend/hotel.db
 backend/test_hotel.db
 
-# --- Node.js & Frontend (React / Vite) ---
+# --- Node.js & Frontend & SuperAdmin (React / Vite) ---
+node_modules
 node_modules/
+**/node_modules
+**/node_modules/
+frontend/node_modules
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
+superadmin/node_modules
+superadmin/node_modules/
+superadmin/dist/
+superadmin/dist-ssr/
 *.local
 
 # Logs
