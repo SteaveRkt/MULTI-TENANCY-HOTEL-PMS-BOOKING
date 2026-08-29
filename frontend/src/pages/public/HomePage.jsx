@@ -49,25 +49,25 @@ const FEATURED_DESTINATIONS = [
     city: 'Antananarivo',
     tag: 'Capitale & Affaires',
     desc: 'Hôtels de standing et séjours d’affaires au cœur de la ville',
-    gradient: 'from-amber-600/80 to-amber-900',
+    image: 'https://images.unsplash.com/photo-1719850520902-16ec4568ae0b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8QW50YW5hbmFyaXZvfGVufDB8fDB8fHww',
   },
   {
     city: 'Nosy Be',
     tag: 'Plages & Détente',
     desc: 'Bungalows de charme et resorts pieds dans l’eau',
-    gradient: 'from-sky-600/80 to-sky-900',
+    image: 'https://images.unsplash.com/photo-1613409466099-04ebd4d69d7a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Tm9zeSUyMEJlfGVufDB8fDB8fHww',
   },
   {
     city: 'Fianarantsoa',
     tag: 'Culture & Nature',
     desc: 'Établissements conviviaux et étapes incontournables',
-    gradient: 'from-emerald-600/80 to-emerald-900',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRaixyJ4g2hkP2AkgNTD6oVAoMx2xxGY-nMU2u_fOLVA&s=10',
   },
   {
-    city: 'Tamatave',
+    city: 'Toliara',
     tag: 'Côte Est & Balnéaire',
     desc: 'Séjours en bord de mer et détente tropicale',
-    gradient: 'from-indigo-600/80 to-indigo-900',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRt_SwLkt5dTn5vfo39EXSwOzuRZWJAjuz7HmH-aohLg&s=10',
   },
 ]
 
@@ -827,9 +827,15 @@ export default function HomePage() {
                 onClick={() => handleSearch(null, dest.city)}
                 className="group relative h-72 rounded-3xl overflow-hidden cursor-pointer shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-end p-6 border border-slate-200/80 dark:border-slate-800"
               >
-                {/* Gradient background representation */}
-                <div className={`absolute inset-0 bg-gradient-to-t ${dest.gradient} opacity-90 group-hover:scale-105 transition-transform duration-500`} />
-                <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/10 transition-colors" />
+                {/* Real photo background */}
+                <img
+                  src={dest.image}
+                  alt={dest.city}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  loading="lazy"
+                />
+                {/* Dark gradient overlay for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent group-hover:from-slate-950/80 transition-colors duration-300" />
 
                 <div className="relative z-10 text-white space-y-2">
                   <span className="inline-block px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold tracking-wide uppercase border border-white/10">
@@ -846,6 +852,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
