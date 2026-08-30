@@ -1,0 +1,80 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#eff4ff',
+          100: '#d8e2ff',
+          200: '#adc6ff',
+          300: '#75a4ff',
+          400: '#3b82f6',
+          500: '#0058be',
+          600: '#004aa6',
+          700: '#003a85',
+          800: '#002960',
+          900: '#001a42',
+        },
+        brand: {
+          50: '#eff4ff',
+          100: '#d8e2ff',
+          200: '#adc6ff',
+          300: '#75a4ff',
+          400: '#3b82f6',
+          500: '#0058be',
+          600: '#004aa6',
+          700: '#003a85',
+          800: '#002960',
+          900: '#001a42',
+        },
+        secondary: {
+          50: '#f5f0ff',
+          100: '#e9ddff',
+          200: '#d0bcff',
+          300: '#b18cfb',
+          400: '#8455ef',
+          500: '#6b38d4',
+          600: '#5516be',
+          700: '#410e99',
+          800: '#2e0773',
+          900: '#23005c',
+        },
+        surface: {
+          DEFAULT: '#f8f9ff',
+          dim: '#cbdbf5',
+          bright: '#f8f9ff',
+          container: '#e5eeff',
+          low: '#eff4ff',
+          high: '#dce9ff',
+          highest: '#d3e4fe',
+          lowest: '#ffffff',
+        },
+        'on-surface': {
+          DEFAULT: '#0b1c30',
+          variant: '#424754',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+      },
+      boxShadow: {
+        'subtle': '0 1px 2px 0 rgba(11, 28, 48, 0.03)',
+        'card': '0 2px 8px -2px rgba(11, 28, 48, 0.05), 0 1px 4px -1px rgba(11, 28, 48, 0.03)',
+        'card-hover': '0 12px 28px -6px rgba(11, 28, 48, 0.08), 0 4px 12px -2px rgba(11, 28, 48, 0.04)',
+        'float': '0 20px 40px -12px rgba(11, 28, 48, 0.12)',
+      },
+      borderRadius: {
+        'xl': '1rem',
+        '2xl': '1.25rem',
+        '3xl': '1.5rem',
+      },
+    },
+  },
+  plugins: [],
+}
