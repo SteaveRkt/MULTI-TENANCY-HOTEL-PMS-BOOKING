@@ -68,13 +68,6 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-500/20 via-transparent to-transparent" />
         
         <div className="relative z-10">
-          <Link
-            to="/hotelier"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors mb-8"
-          >
-            <ArrowLeft size={16} />
-            <span>Retour à l'espace hôtelier</span>
-          </Link>
           <div className="flex items-center gap-3 mb-10">
             <div className="p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md text-white">
               <Building2 size={28} />
@@ -131,25 +124,20 @@ export default function LoginPage() {
 
           {/* Tabs */}
           <div className="flex bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1.5 mb-8 border border-slate-200/80 dark:border-slate-700/60">
-            {[
-              ['login', 'Connexion'],
-              ['register', 'Créer un hôtel'],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setTab(key)
-                  setError('')
-                }}
-                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                  tab === key
-                    ? 'bg-white text-primary-700 shadow-sm border border-slate-200/70 dark:bg-primary-600 dark:text-white dark:border-transparent font-bold'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setTab('login')
+                setError('')
+              }}
+              className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                tab === 'login'
+                  ? 'bg-white text-primary-700 shadow-sm border border-slate-200/70 dark:bg-primary-600 dark:text-white dark:border-transparent font-bold'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              Connexion
+            </button>
           </div>
 
           {error && (

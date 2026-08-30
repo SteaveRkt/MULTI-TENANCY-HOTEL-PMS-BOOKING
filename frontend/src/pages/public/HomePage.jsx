@@ -27,6 +27,8 @@ import {
 } from 'lucide-react'
 import { publicAPI, getApiErrorMessage } from '../../api/client'
 import RoomImageSlider from '../../components/public/RoomImageSlider'
+import Modal from '../../components/ui/Modal'
+import Reveal, { RevealGroup } from '../../components/ui/Reveal'
 
 const ROOM_TYPES = [
   { value: '', label: 'Tous les types' },
@@ -71,7 +73,6 @@ const FEATURED_DESTINATIONS = [
     image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRt_SwLkt5dTn5vfo39EXSwOzuRZWJAjuz7HmH-aohLg&s=10',
   },
 ]
-
 function RoomSkeleton() {
   return (
     <div className="bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 rounded-2xl overflow-hidden animate-pulse">
@@ -110,8 +111,13 @@ export default function HomePage() {
   const [filterRoomType, setFilterRoomType] = useState('')
   const [filterHotel, setFilterHotel] = useState('')
   const [filterCapacity, setFilterCapacity] = useState(1)
-  const [sortBy, setSortBy] = useState('price_asc')
+  const [sortBy, setSortBy] = useState('rating_desc')
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [reviewDrafts, setReviewDrafts] = useState({})
+  const [reviewSubmitting, setReviewSubmitting] = useState({})
+  const [expandedReviews, setExpandedReviews] = useState({})
+  const [reviewModalRoomId, setReviewModalRoomId] = useState(null)
+  const [reviewModalDraft, setReviewModalDraft] = useState({ rating: 0, reviewer_name: '', comment: '' })
 
   // Fetch available hotels/cities on load
   useEffect(() => {
@@ -208,6 +214,11 @@ export default function HomePage() {
     list.sort((a, b) => {
       const priceA = Number(a.price_per_night || 0)
       const priceB = Number(b.price_per_night || 0)
+      const ratingA = Number(a.rating || 0)
+      const ratingB = Number(b.rating || 0)
+
+      if (sortBy === 'rating_desc') return ratingB - ratingA || priceA - priceB
+      if (sortBy === 'rating_asc') return ratingA - ratingB || priceA - priceB
       if (sortBy === 'price_asc') return priceA - priceB
       if (sortBy === 'price_desc') return priceB - priceA
       if (sortBy === 'capacity_desc') return (b.capacity || 1) - (a.capacity || 1)
@@ -221,6 +232,65 @@ export default function HomePage() {
 
     return list
   }, [rawRooms, filterMinPrice, filterMaxPrice, filterRoomType, filterHotel, filterCapacity, sortBy])
+
+  const handleReviewSubmit = async (roomId, draftOverride = null) => {
+    const draft = draftOverride || reviewDrafts[roomId] || { rating: 0, reviewer_name: '', comment: '' }
+    const rating = Number(draft.rating || 0)
+    const reviewerName = String(draft.reviewer_name || '').trim()
+    const comment = String(draft.comment || '').trim()
+
+    if (!rating || rating < 1 || rating > 5) return
+    if (!reviewerName) {
+      setError('Merci de renseigner votre nom avant de publier votre avis.')
+      return
+    }
+    if (!comment) {
+      setError('Merci d’ajouter un commentaire avant de publier votre avis.')
+      return
+    }
+
+    setReviewSubmitting((prev) => ({ ...prev, [roomId]: true }))
+    try {
+      const res = await publicAPI.submitRoomReview(roomId, {
+        rating,
+        reviewer_name: reviewerName,
+        comment,
+      })
+      const updatedRating = Number(res?.data?.rating ?? rating)
+      const updatedReviewsCount = Number(res?.data?.reviews_count ?? 0)
+
+      setRawRooms((prev) =>
+        prev.map((room) => {
+          const currentRoomId = room.room_id || room.id
+          if (currentRoomId !== roomId) return room
+          const existingReviews = Array.isArray(room.reviews) ? room.reviews : []
+          const newReview = {
+            reviewer_name: reviewerName,
+            rating,
+            comment,
+          }
+          return {
+            ...room,
+            rating: updatedRating,
+            reviews_count: updatedReviewsCount,
+            reviews: [...existingReviews, newReview],
+          }
+        })
+      )
+
+      setReviewDrafts((prev) => ({
+        ...prev,
+        [roomId]: { rating: 0, reviewer_name: '', comment: '' },
+      }))
+      setReviewModalDraft({ rating: 0, reviewer_name: '', comment: '' })
+      setReviewModalRoomId(null)
+      setError('')
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'La note n’a pas pu être enregistrée.'))
+    } finally {
+      setReviewSubmitting((prev) => ({ ...prev, [roomId]: false }))
+    }
+  }
 
   const handleBook = (room) => {
     const normalizedRoom = {
@@ -257,7 +327,7 @@ export default function HomePage() {
     setFilterRoomType('')
     setFilterHotel('')
     setFilterCapacity(1)
-    setSortBy('price_asc')
+    setSortBy('rating_desc')
   }
 
   const hasActiveFilters =
@@ -267,6 +337,10 @@ export default function HomePage() {
     filterHotel !== '' ||
     filterCapacity > 1
 
+  const reviewModalRoom = reviewModalRoomId
+    ? rawRooms.find((room) => (room.room_id || room.id) === reviewModalRoomId) || null
+    : null
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors">
       {/* 1. HERO SECTION & FAST SEARCH BAR */}
@@ -274,7 +348,7 @@ export default function HomePage() {
         {/* Decorative background glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary-500/10 dark:bg-primary-600/15 blur-[120px] rounded-full pointer-events-none" />
 
-        <div className="relative max-w-4xl mx-auto text-center">
+        <Reveal y={24} duration={0.6} amount={0.4} className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/70 border border-primary-100 dark:border-primary-900 text-primary-700 dark:text-primary-300 text-xs font-bold mb-5 shadow-subtle">
             <Sparkles size={13} className="text-amber-500 fill-amber-500" />
             Réservations Directes d'Hôtels & Séjours Garantis
@@ -290,10 +364,10 @@ export default function HomePage() {
           <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base mb-8 max-w-xl mx-auto font-normal leading-relaxed">
             Consultez les disponibilités en temps réel, sans intermédiaire et avec confirmation immédiate.
           </p>
-        </div>
+        </Reveal>
 
         {/* Fast Search Card (No budget slider here, as requested) */}
-        <div className="max-w-5xl mx-auto">
+        <Reveal y={24} duration={0.6} delay={0.12} amount={0.4} className="max-w-5xl mx-auto">
           <form
             onSubmit={(e) => handleSearch(e)}
             className="bg-white border border-slate-200/90 shadow-float rounded-3xl p-4 sm:p-6 dark:bg-slate-900 dark:border-slate-800 transition-colors"
@@ -389,7 +463,7 @@ export default function HomePage() {
               Rechercher & Réserver mon séjour
             </button>
           </form>
-        </div>
+        </Reveal>
       </section>
 
       {/* 2. RESULTS SECTION WITH HOTELS.COM STYLE FILTERS */}
@@ -451,6 +525,8 @@ export default function HomePage() {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary-500 transition-all cursor-pointer"
                   >
+                    <option value="rating_desc">Note la plus élevée</option>
+                    <option value="rating_asc">Note la plus faible</option>
                     <option value="price_asc">Prix le plus bas (croissant)</option>
                     <option value="price_desc">Prix le plus élevé (décroissant)</option>
                     <option value="capacity_desc">Capacité maximale</option>
@@ -686,66 +762,184 @@ export default function HomePage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                  <div className="space-y-5">
                     {filteredAndSortedRooms.map((room) => {
                       const roomType = room.room_type || room.type || 'STANDARD'
                       const roomNumber = room.room_number || room.number
                       const roomId = room.room_id || room.id
                       const pricePerNight = Number(room.price_per_night || 0)
                       const totalPrice = pricePerNight * nightsCount
+                      const rating = Number(room.rating || 0)
+                      const reviewsCount = Number(room.reviews_count || 0)
+                      const roomReviews = Array.isArray(room.reviews) ? room.reviews : []
+                      const visibleReviews = expandedReviews[roomId] ? roomReviews : roomReviews.slice(0, 2)
 
                       return (
-                        <div
+                        <Reveal
+                          as="div"
                           key={roomId}
-                          className="bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover dark:bg-slate-900 dark:border-slate-800 rounded-2xl overflow-hidden transition-all duration-200 flex flex-col justify-between group"
+                          y={20}
+                          duration={0.45}
+                          amount={0.1}
+                          className="bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover dark:bg-slate-900 dark:border-slate-800 rounded-3xl overflow-hidden transition-all duration-200 group"
                         >
-                          {/* Image slider Unsplash interactive */}
-                          <RoomImageSlider room={room} />
-
-                          <div className="p-5 flex-1 flex flex-col justify-between">
-                            <div>
-                              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                <span className="flex items-center gap-1 font-medium">
-                                  <Users size={14} className="text-slate-400" /> {room.capacity} personnes
-                                </span>
-                                {room.city && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1 font-medium">
-                                      <MapPin size={13} className="text-slate-400" /> {room.city}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-
-                              {room.description && (
-                                <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mb-4 leading-relaxed">
-                                  {room.description}
-                                </p>
-                              )}
+                          <div className="flex flex-col md:flex-row md:min-h-[250px]">
+                            <div className="md:w-[320px] xl:w-[360px] flex-shrink-0">
+                              <RoomImageSlider room={room} className="h-64 md:h-full md:min-h-[250px] w-full" />
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                              <div>
-                                <div className="text-lg sm:text-xl font-extrabold font-heading text-primary-700 dark:text-primary-400 leading-tight">
-                                  {new Intl.NumberFormat('fr-FR').format(Math.round(pricePerNight))} Ar
-                                  <span className="text-[11px] font-normal text-slate-400"> / nuit</span>
+                            <div className="flex-1 p-5 lg:p-6 flex flex-col justify-between gap-4">
+                              <div className="space-y-4">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-950/70 dark:text-primary-300 text-[10px] font-bold uppercase tracking-wide border border-primary-100 dark:border-primary-900">
+                                        {roomType}
+                                      </span>
+                                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        Chambre {roomNumber}
+                                      </span>
+                                    </div>
+
+                                    <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-tight mb-1.5">
+                                      {room.hotel_name || 'Hôtel'}
+                                    </h3>
+
+                                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                                      <span className="flex items-center gap-1 font-medium">
+                                        <Users size={14} className="text-slate-400" /> {room.capacity} personnes
+                                      </span>
+                                    </div>
+
+                                    {room.address && (
+                                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                                        <MapPin size={12} className="mt-0.5 text-slate-400 flex-shrink-0" />
+                                        <span>{room.address}{room.city ? `, ${room.city}` : ''}</span>
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-2 text-amber-500 md:justify-end">
+                                    {rating > 0 ? (
+                                      <>
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                          <Star
+                                            key={star}
+                                            size={14}
+                                            className={star <= Math.round(rating) ? 'fill-current' : 'text-slate-300 dark:text-slate-600'}
+                                          />
+                                        ))}
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 ml-0.5">
+                                          {rating.toFixed(1)}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                                        Non noté
+                                      </span>
+                                    )}
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">({reviewsCount} avis)</span>
+                                  </div>
                                 </div>
-                                {nightsCount > 1 && (
-                                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                                    Total {nightsCount} nuits : {new Intl.NumberFormat('fr-FR').format(Math.round(totalPrice))} Ar
+
+                                {room.description && (
+                                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    {room.description}
+                                  </p>
+                                )}
+
+                                {roomReviews.length > 0 && (
+                                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        Avis clients
+                                      </span>
+                                      {roomReviews.length > 2 && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setExpandedReviews((prev) => ({
+                                              ...prev,
+                                              [roomId]: !prev[roomId],
+                                            }))
+                                          }
+                                          className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 cursor-pointer"
+                                        >
+                                          {expandedReviews[roomId] ? 'Voir moins' : 'Voir tous'}
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      {visibleReviews.map((review, index) => (
+                                        <div
+                                          key={`${roomId}-${review.reviewer_name}-${index}`}
+                                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-950/60"
+                                        >
+                                          <div className="flex items-center justify-between gap-2 mb-1">
+                                            <span className="text-[11px] font-bold text-slate-800 dark:text-white">
+                                              {review.reviewer_name}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-amber-500">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                  key={star}
+                                                  size={10}
+                                                  className={star <= Number(review.rating || 0) ? 'fill-current' : 'text-slate-300 dark:text-slate-600'}
+                                                />
+                                              ))}
+                                            </span>
+                                          </div>
+                                          <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                                            {review.comment}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
+
+                                <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setReviewModalRoomId(roomId)
+                                      setReviewModalDraft({
+                                        rating: 0,
+                                        reviewer_name: '',
+                                        comment: '',
+                                      })
+                                    }}
+                                    className="w-full md:w-auto px-3 py-2 rounded-xl bg-amber-500 text-white text-[11px] font-bold hover:bg-amber-600 transition cursor-pointer"
+                                  >
+                                    Publier mon avis
+                                  </button>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleBook(room)}
-                                className="flex items-center gap-1 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md hover:shadow-primary-600/20 active:scale-95 cursor-pointer flex-shrink-0"
-                              >
-                                Réserver <ChevronRight size={14} />
-                              </button>
+
+                              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div>
+                                  <div className="text-2xl font-black font-heading text-primary-700 dark:text-primary-400 leading-tight">
+                                    {new Intl.NumberFormat('fr-FR').format(Math.round(pricePerNight))} Ar
+                                    <span className="text-[11px] font-medium text-slate-400 align-middle"> / nuit</span>
+                                  </div>
+                                  {nightsCount > 1 && (
+                                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                                      Total {nightsCount} nuits : {new Intl.NumberFormat('fr-FR').format(Math.round(totalPrice))} Ar
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() => handleBook(room)}
+                                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-sm font-bold transition-all shadow-sm hover:shadow-md hover:shadow-primary-600/20 active:scale-95 cursor-pointer"
+                                >
+                                  Réserver <ChevronRight size={16} />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Reveal>
                       )
                     })}
                   </div>
@@ -756,10 +950,113 @@ export default function HomePage() {
         ) : null}
       </div>
 
+      <Modal
+        isOpen={Boolean(reviewModalRoomId)}
+        onClose={() => {
+          setReviewModalRoomId(null)
+          setReviewModalDraft({ rating: 0, reviewer_name: '', comment: '' })
+        }}
+        title={reviewModalRoom ? `Avis pour ${reviewModalRoom.hotel_name || 'cette chambre'}` : 'Publier un avis'}
+        size="lg"
+      >
+        {reviewModalRoom && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Chambre</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    {reviewModalRoom.room_number || reviewModalRoom.number} · {reviewModalRoom.room_type || reviewModalRoom.type}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1 text-amber-500">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={16}
+                      className={star <= Number(reviewModalDraft.rating || 0) ? 'fill-current' : 'text-slate-300 dark:text-slate-600'}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300 block">
+                Votre note
+              </label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewModalDraft((prev) => ({ ...prev, rating: star }))}
+                    className="p-1 cursor-pointer transition-transform hover:scale-110"
+                    aria-label={`Noter ${star} étoiles`}
+                  >
+                    <Star
+                      size={22}
+                      className={star <= Number(reviewModalDraft.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300 block">
+                Votre nom
+              </label>
+              <input
+                type="text"
+                value={reviewModalDraft.reviewer_name}
+                onChange={(e) => setReviewModalDraft((prev) => ({ ...prev, reviewer_name: e.target.value }))}
+                placeholder="Saisissez votre nom"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 dark:bg-slate-950 dark:border-slate-700 dark:text-white transition-all text-sm font-medium"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300 block">
+                Commentaire
+              </label>
+              <textarea
+                rows={4}
+                value={reviewModalDraft.comment}
+                onChange={(e) => setReviewModalDraft((prev) => ({ ...prev, comment: e.target.value }))}
+                placeholder="Décrivez votre expérience"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 dark:bg-slate-950 dark:border-slate-700 dark:text-white transition-all text-sm font-medium resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setReviewModalRoomId(null)
+                  setReviewModalDraft({ rating: 0, reviewer_name: '', comment: '' })
+                }}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={reviewSubmitting[reviewModalRoomId]}
+                onClick={() => handleReviewSubmit(reviewModalRoomId, reviewModalDraft)}
+                className="px-4 py-2 rounded-xl bg-primary-600 text-white text-xs font-bold hover:bg-primary-700 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {reviewSubmitting[reviewModalRoomId] ? 'Envoi...' : 'Publier mon avis'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* 3. TRAVELER SERVICES PRESENTATION SECTION */}
       <section id="services" className="py-20 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
+          <Reveal amount={0.4} className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest block mb-2">
               Vos Avantages Voyageurs
             </span>
@@ -769,9 +1066,9 @@ export default function HomePage() {
             <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base mt-2">
               Bénéficiez de garanties exclusives et d'un contact direct avec la réception des établissements.
             </p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <RevealGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" stagger={0.1} amount={0.2} y={22}>
             {/* Advantage 1 */}
             <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -823,14 +1120,14 @@ export default function HomePage() {
                 Suivez votre réservation à tout moment avec votre code dossier et contactez directement la conciergerie.
               </p>
             </div>
-          </div>
+          </RevealGroup>
         </div>
       </section>
 
       {/* 4. FEATURED DESTINATIONS SECTION */}
       <section id="destinations" className="py-20 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+          <Reveal amount={0.4} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
             <div>
               <span className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest block mb-2">
                 Destinations Phares
@@ -842,12 +1139,12 @@ export default function HomePage() {
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs">
               Sélectionnez une destination pour découvrir instantanément les chambres disponibles.
             </p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <RevealGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" stagger={0.1} amount={0.15} y={26}>
             {FEATURED_DESTINATIONS.map((dest, i) => (
               <div
-                key={i}
+                key={dest.city}
                 onClick={() => handleSearch(null, dest.city)}
                 className="group relative h-72 rounded-3xl overflow-hidden cursor-pointer shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-end p-6 border border-slate-200/80 dark:border-slate-800"
               >
@@ -857,6 +1154,10 @@ export default function HomePage() {
                   alt={dest.city}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   loading="lazy"
+                  style={{ aspectRatio: '4 / 5' }}
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop&q=60'
+                  }}
                 />
                 {/* Dark gradient overlay for readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/50 to-transparent group-hover:from-slate-950/80 transition-colors duration-300" />
@@ -875,22 +1176,22 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
+          </RevealGroup>
 
         </div>
       </section>
 
       {/* 5. HOTELIER BANNER (Transition to Hotelier SaaS) */}
-      <section className="py-14 bg-gradient-to-r from-slate-900 via-slate-850 to-primary-950 text-white border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <section className="py-14 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-800">
+        <Reveal amount={0.4} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1.5 text-center md:text-left">
-            <span className="text-xs font-bold text-primary-400 uppercase tracking-widest">
+            <span className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
               Vous êtes gérant ou propriétaire d'un hôtel ?
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold font-heading">
               Gérez votre établissement avec notre logiciel PMS tout-en-un
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl">
               Planning interactif des chambres, traçabilité de caisse, facturation PDF et statistiques d'occupation en temps réel.
             </p>
           </div>
@@ -898,18 +1199,18 @@ export default function HomePage() {
           <div className="flex items-center gap-3 flex-shrink-0">
             <Link
               to="/hotelier"
-              className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs sm:text-sm font-extrabold shadow-md transition cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs sm:text-sm font-extrabold shadow-md hover:shadow-primary-600/30 transition-all cursor-pointer"
             >
               Découvrir l'Espace Hôtelier
             </Link>
             <Link
               to="/register"
-              className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 text-xs sm:text-sm font-bold transition cursor-pointer"
+              className="px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100 border border-slate-300 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:border-white/20 text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer"
             >
               Inscrire mon hôtel
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Footer */}

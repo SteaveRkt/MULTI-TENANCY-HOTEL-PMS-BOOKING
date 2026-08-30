@@ -6,7 +6,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, Edit2, Trash2, BedDouble, AlertCircle } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, BedDouble, AlertCircle, Image as ImageIcon, Star } from 'lucide-react'
 
 export default function RoomsManagementPage() {
   const [rooms, setRooms] = useState([])
@@ -26,7 +26,10 @@ export default function RoomsManagementPage() {
     price_per_night: '',
     status: 'AVAILABLE',
     description: '',
+    image_url: '',
+    image_urls: '',
   })
+  const [imageUrlFields, setImageUrlFields] = useState([''])
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -54,6 +57,17 @@ export default function RoomsManagementPage() {
     fetchRooms()
   }, [statusFilter, typeFilter])
 
+  const syncImageUrlFields = (nextFields) => {
+    const cleaned = nextFields.map((url) => String(url || '').trim()).filter(Boolean)
+    const firstUrl = cleaned[0] || ''
+    setImageUrlFields(nextFields)
+    setFormData((prev) => ({
+      ...prev,
+      image_url: firstUrl,
+      image_urls: cleaned.join('\n'),
+    }))
+  }
+
   const openCreateModal = () => {
     setEditingRoom(null)
     setFormData({
@@ -64,13 +78,22 @@ export default function RoomsManagementPage() {
       price_per_night: '',
       status: 'AVAILABLE',
       description: '',
+      image_url: '',
+      image_urls: '',
     })
+    setImageUrlFields([''])
     setFormError('')
     setModalOpen(true)
   }
 
   const openEditModal = (room) => {
     setEditingRoom(room)
+    const existingUrls = Array.isArray(room.image_urls) && room.image_urls.length > 0
+      ? room.image_urls
+      : room.image_url
+        ? [room.image_url]
+        : ['']
+
     setFormData({
       number: room.number,
       type: room.type,
@@ -79,7 +102,10 @@ export default function RoomsManagementPage() {
       price_per_night: room.price_per_night,
       status: room.status,
       description: room.description || '',
+      image_url: room.image_url || '',
+      image_urls: existingUrls.join('\n'),
     })
+    setImageUrlFields(existingUrls)
     setFormError('')
     setModalOpen(true)
   }
@@ -90,6 +116,10 @@ export default function RoomsManagementPage() {
     setSaving(true)
 
     try {
+      const rawImageUrls = imageUrlFields
+        .map((url) => String(url || '').trim())
+        .filter(Boolean)
+
       const payload = {
         number: formData.number.trim(),
         type: formData.type,
@@ -98,6 +128,8 @@ export default function RoomsManagementPage() {
         price_per_night: Number(formData.price_per_night),
         status: formData.status,
         description: formData.description?.trim() || undefined,
+        image_url: rawImageUrls[0] || formData.image_url?.trim() || undefined,
+        image_urls: rawImageUrls.length > 0 ? rawImageUrls : undefined,
       }
 
       if (editingRoom) {
@@ -212,6 +244,7 @@ export default function RoomsManagementPage() {
                 <th className="py-4 px-5">Type</th>
                 <th className="py-4 px-5">Étage</th>
                 <th className="py-4 px-5">Capacité</th>
+                <th className="py-4 px-5">Note</th>
                 <th className="py-4 px-5">Prix / Nuit</th>
                 <th className="py-4 px-5">Statut</th>
                 <th className="py-4 px-5 text-right">Actions</th>
@@ -231,43 +264,58 @@ export default function RoomsManagementPage() {
                   </td>
                 </tr>
               ) : (
-                filteredRooms.map((room) => (
-                  <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-5 font-bold font-heading text-slate-900 dark:text-white">Chambre {room.number}</td>
-                    <td className="py-4 px-5">
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {room.type}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5 text-slate-600 dark:text-slate-300">Étage {room.floor}</td>
-                    <td className="py-4 px-5 text-slate-600 dark:text-slate-300">{room.capacity} pers.</td>
-                    <td className="py-4 px-5 font-bold font-heading text-primary-700 dark:text-primary-400">
-                      {new Intl.NumberFormat('fr-FR').format(Math.round(room.price_per_night))} Ar
-                    </td>
-                    <td className="py-4 px-5">
-                      <Badge variant={room.status}>{room.status}</Badge>
-                    </td>
-                    <td className="py-4 px-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEditModal(room)}
-                          className="p-1.5 rounded-xl text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:text-slate-400 dark:hover:text-primary-300 dark:hover:bg-primary-950/40 transition cursor-pointer"
-                          title="Modifier"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(room)}
-                          className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 transition cursor-pointer"
-                          title="Supprimer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                filteredRooms.map((room) => {
+                  const roomRating = Number(room.rating || 0)
+                  const roomReviewsCount = Number(room.reviews_count || 0)
+
+                  return (
+                    <tr key={room.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="py-4 px-5 font-bold font-heading text-slate-900 dark:text-white">Chambre {room.number}</td>
+                      <td className="py-4 px-5">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {room.type}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-slate-600 dark:text-slate-300">Étage {room.floor}</td>
+                      <td className="py-4 px-5 text-slate-600 dark:text-slate-300">{room.capacity} pers.</td>
+                      <td className="py-4 px-5">
+                        {roomReviewsCount > 0 && roomRating > 0 ? (
+                          <div className="flex items-center gap-1.5 text-amber-500">
+                            <Star size={14} className="fill-current" />
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{roomRating.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Non noté</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-5 font-bold font-heading text-primary-700 dark:text-primary-400">
+                        {new Intl.NumberFormat('fr-FR').format(Math.round(room.price_per_night))} Ar
+                      </td>
+                      <td className="py-4 px-5">
+                        <Badge variant={room.status}>{room.status}</Badge>
+                      </td>
+                          <td className="py-4 px-5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => openEditModal(room)}
+                              className="p-1.5 rounded-xl text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:text-slate-400 dark:hover:text-primary-300 dark:hover:bg-primary-950/40 transition cursor-pointer"
+                              title="Modifier"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(room)}
+                              className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
             </tbody>
           </table>
         </CardContent>
@@ -358,6 +406,71 @@ export default function RoomsManagementPage() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <ImageIcon size={14} className="text-primary-600 dark:text-primary-400" />
+              Photos de la chambre (1 URL par champ)
+            </label>
+            <div className="space-y-2">
+              {imageUrlFields.map((url, index) => (
+                <div key={`image-url-${index}`} className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    placeholder={`URL image ${index + 1}`}
+                    value={url}
+                    onChange={(e) => {
+                      const nextFields = [...imageUrlFields]
+                      nextFields[index] = e.target.value
+                      syncImageUrlFields(nextFields)
+                    }}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900/70 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
+                  />
+                  {imageUrlFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextFields = imageUrlFields.filter((_, fieldIndex) => fieldIndex !== index)
+                        syncImageUrlFields(nextFields.length ? nextFields : [''])
+                      }}
+                      className="px-2 py-2 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 cursor-pointer"
+                    >
+                      Retirer
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => syncImageUrlFields([...imageUrlFields, ''])}
+                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 cursor-pointer"
+              >
+                + Ajouter une autre URL
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
+              Ajoutez une URL par champ. La première devient la couverture principale.
+            </p>
+            {formData.image_url?.trim() && (
+              <div className="mt-2 relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+                <img
+                  src={formData.image_url.trim()}
+                  alt="Aperçu"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                    e.target.nextSibling.style.display = 'flex'
+                  }}
+                />
+                <div
+                  className="hidden absolute inset-0 items-center justify-center text-xs text-slate-400 dark:text-slate-500 gap-1.5"
+                  style={{ display: 'none' }}
+                >
+                  <AlertCircle size={14} /> Image introuvable, vérifiez l'URL
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">

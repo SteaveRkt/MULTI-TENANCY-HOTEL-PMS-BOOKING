@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date
 import uuid
 import secrets
@@ -20,12 +21,80 @@ from app.models.reservation import Reservation
 from app.schemas.public_booking import (
     PublicHotelResponse,
     PublicRoomResponse,
+    PublicRoomReviewCreate,
+    PublicRoomReviewResponse,
     PublicReservationCreate,
     PublicReservationResponse,
 )
 from fastapi.responses import StreamingResponse
 
 from app.services.invoice import generate_invoice_pdf, get_invoice_filename
+
+
+def normalize_image_urls(image_urls, fallback_url=None):
+    urls = []
+    raw_values = []
+
+    if isinstance(image_urls, str):
+        raw_values = [image_urls]
+    elif isinstance(image_urls, (list, tuple, set)):
+        raw_values = list(image_urls)
+    elif image_urls is not None:
+        raw_values = [image_urls]
+
+    if fallback_url is not None:
+        raw_values.append(fallback_url)
+
+    for image in raw_values:
+        if image is None:
+            continue
+        cleaned = str(image).strip()
+        if not cleaned:
+            continue
+        for part in cleaned.replace("\r", "\n").replace(",", "\n").split("\n"):
+            candidate = part.strip()
+            if candidate and candidate not in urls:
+                urls.append(candidate)
+
+    if not urls and fallback_url:
+        fallback = str(fallback_url).strip()
+        if fallback:
+            urls = [fallback]
+    return urls
+
+
+def normalize_public_room_rating(rating, reviews_count):
+    rating_value = float(rating or 0)
+    reviews_total = int(reviews_count or 0)
+    if reviews_total <= 0:
+        return 0.0
+    return rating_value
+
+
+def sort_public_rooms(rooms):
+    """Put the highest-rated rooms first, then fall back to lower price."""
+    sorted_rooms = list(rooms)
+
+    def get_rating(room):
+        if isinstance(room, dict):
+            reviews_count = int(room.get("reviews_count") or 0)
+            rating_value = float(room.get("rating") or 0)
+            return normalize_public_room_rating(rating_value, reviews_count)
+        reviews_count = int(getattr(room, "reviews_count", 0) or 0)
+        rating_value = float(getattr(room, "rating", 0) or 0)
+        return normalize_public_room_rating(rating_value, reviews_count)
+
+    def get_price(room):
+        if isinstance(room, dict):
+            return float(room.get("price_per_night") or 0)
+        return float(getattr(room, "price_per_night", 0) or 0)
+
+    sorted_rooms.sort(
+        key=lambda room: (get_rating(room), -get_price(room)),
+        reverse=True,
+    )
+    return sorted_rooms
+
 
 def generate_reservation_code(db: Session) -> str:
     while True:
@@ -48,6 +117,39 @@ router = APIRouter(
     tags=["Public Booking"],
 )
 
+PUBLIC_ROOM_REVIEWS = defaultdict(list)
+
+
+def get_room_reviews(room_id):
+    return PUBLIC_ROOM_REVIEWS.get(str(room_id), [])
+
+
+def build_public_reservation_response(db: Session, reservation: Reservation, room: Room, hotel: Tenant):
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.reservation_id == reservation.id,
+            Payment.status == "SUCCESS",
+        )
+        .first()
+    )
+
+    return PublicReservationResponse(
+        reservation_id=reservation.id,
+        reservation_code=reservation.reservation_code,
+        hotel_id=hotel.id,
+        hotel_name=hotel.name,
+        room_id=room.id,
+        room_number=room.number,
+        customer_id=reservation.customer_id,
+        check_in=reservation.check_in,
+        check_out=reservation.check_out,
+        number_of_guests=reservation.number_of_guests,
+        status=reservation.status,
+        total_price=float(reservation.total_price),
+        is_paid=payment is not None,
+    )
+
 
 @router.get(
     "/hotels",
@@ -63,6 +165,70 @@ def get_public_hotels(
     )
 
     return hotels
+
+
+@router.post(
+    "/rooms/{room_id}/reviews",
+    response_model=PublicRoomReviewResponse,
+)
+def submit_public_room_review(
+    room_id: uuid.UUID,
+    data: PublicRoomReviewCreate,
+    db: Session = Depends(get_db),
+):
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room not found",
+        )
+
+    reviewer_name = data.reviewer_name.strip() if data.reviewer_name else "Anonyme"
+    comment = data.comment.strip() if data.comment else ""
+    review_entry = {
+        "reviewer_name": reviewer_name,
+        "rating": int(data.rating),
+        "comment": comment,
+    }
+    PUBLIC_ROOM_REVIEWS[str(room_id)].append(review_entry)
+
+    previous_total = float(room.rating or 0) * int(room.reviews_count or 0)
+    new_reviews_count = int(room.reviews_count or 0) + 1
+    new_rating = round(
+        (previous_total + float(data.rating)) / new_reviews_count,
+        2,
+    )
+
+    room.rating = new_rating
+    room.reviews_count = new_reviews_count
+    db.commit()
+    db.refresh(room)
+
+    return PublicRoomReviewResponse(
+        room_id=room.id,
+        rating=float(room.rating),
+        reviews_count=int(room.reviews_count),
+        message=(
+            f"Merci {reviewer_name} pour votre avis !"
+            if comment
+            else f"Merci {reviewer_name} pour votre note !"
+        ),
+    )
+
+
+@router.get(
+    "/rooms/{room_id}/reviews",
+    response_model=list[dict],
+)
+def get_public_room_reviews(room_id: uuid.UUID, db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.id == room_id).first()
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room not found",
+        )
+
+    return get_room_reviews(room_id)
 
 
 @router.get(
@@ -138,7 +304,6 @@ def get_public_available_rooms(
 
     available_rooms = []
 
-
     for room in rooms:
 
         overlapping_reservation = (
@@ -162,11 +327,20 @@ def get_public_available_rooms(
             continue
 
 
+        normalized_images = normalize_image_urls(
+            [room.image_url, getattr(room, "image_urls", None)],
+            room.image_url,
+        )
+
+        reviews_total = int(room.reviews_count or 0)
+        public_rating = normalize_public_room_rating(room.rating, reviews_total)
+
         available_rooms.append(
             PublicRoomResponse(
                 hotel_id=room.tenant.id,
                 hotel_name=room.tenant.name,
                 city=room.tenant.city,
+                address=room.tenant.address,
 
                 room_id=room.id,
                 room_number=room.number,
@@ -177,12 +351,17 @@ def get_public_available_rooms(
                 price_per_night=float(
                     room.price_per_night
                 ),
+                rating=public_rating,
+                reviews_count=reviews_total,
 
                 description=room.description,
+                image_url=normalized_images[0] if normalized_images else None,
+                image_urls=normalized_images,
+                reviews=get_room_reviews(room.id)[:10],
             )
         )
 
-    return available_rooms
+    return sort_public_rooms(available_rooms)
 
 
 
@@ -347,28 +526,9 @@ def create_public_reservation(
         )
 
 
-    return PublicReservationResponse(
-        reservation_id=reservation.id,
-        reservation_code=reservation.reservation_code,
-        hotel_id=hotel.id,
-        hotel_name=hotel.name,
+    return build_public_reservation_response(db, reservation, room, hotel)
 
-        room_id=room.id,
-        room_number=room.number,
 
-        customer_id=customer.id,
-
-        check_in=reservation.check_in,
-        check_out=reservation.check_out,
-
-        number_of_guests=reservation.number_of_guests,
-
-        status=reservation.status,
-
-        total_price=float(
-            reservation.total_price
-        ),
-    )
 @router.get(
     "/reservations/{reservation_code}",
     response_model=PublicReservationResponse,
@@ -414,30 +574,9 @@ def get_public_reservation(
             detail="Reservation data not found",
         )
 
-    return PublicReservationResponse(
-        reservation_id=reservation.id,
+    return build_public_reservation_response(db, reservation, room, hotel)
 
-        reservation_code=reservation.reservation_code,
 
-        hotel_id=hotel.id,
-        hotel_name=hotel.name,
-
-        room_id=room.id,
-        room_number=room.number,
-
-        customer_id=reservation.customer_id,
-
-        check_in=reservation.check_in,
-        check_out=reservation.check_out,
-
-        number_of_guests=reservation.number_of_guests,
-
-        status=reservation.status,
-
-        total_price=float(
-            reservation.total_price
-        ),
-    )
 @router.post(
     "/reservations/{reservation_code}/cancel",
     response_model=PublicReservationResponse,
@@ -513,30 +652,9 @@ def cancel_public_reservation(
         )
 
 
-    return PublicReservationResponse(
-        reservation_id=reservation.id,
+    return build_public_reservation_response(db, reservation, room, hotel)
 
-        reservation_code=reservation.reservation_code,
 
-        hotel_id=hotel.id,
-        hotel_name=hotel.name,
-
-        room_id=room.id,
-        room_number=room.number,
-
-        customer_id=reservation.customer_id,
-
-        check_in=reservation.check_in,
-        check_out=reservation.check_out,
-
-        number_of_guests=reservation.number_of_guests,
-
-        status=reservation.status,
-
-        total_price=float(
-            reservation.total_price
-        ),
-    )
 @router.post(
     "/reservations/{reservation_code}/payment",
     response_model=PaymentResponse,

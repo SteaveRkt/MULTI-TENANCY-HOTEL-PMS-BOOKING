@@ -46,6 +46,17 @@ class Room(Base):
         nullable=False,
     )
 
+    rating: Mapped[float] = mapped_column(
+        Numeric(3, 2),
+        nullable=False,
+        default=0.0,
+    )
+
+    reviews_count: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+    )
+
     status: Mapped[str] = mapped_column(
         String(30),
         nullable=False,
@@ -54,6 +65,11 @@ class Room(Base):
 
     description: Mapped[str | None] = mapped_column(
         String(500),
+        nullable=True,
+    )
+
+    image_url: Mapped[str | None] = mapped_column(
+        String(1000),
         nullable=True,
     )
 

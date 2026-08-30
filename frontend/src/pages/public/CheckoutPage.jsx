@@ -4,6 +4,7 @@ import { BedDouble, Calendar, Users, AlertCircle, Loader2, ChevronLeft } from 'l
 import { publicAPI, getApiErrorMessage } from '../../api/client'
 import { Card, CardContent } from '../../components/ui/Card'
 import RoomImageSlider from '../../components/public/RoomImageSlider'
+import Reveal from '../../components/ui/Reveal'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
@@ -89,7 +90,7 @@ export default function CheckoutPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
-        <div className="lg:col-span-2">
+        <Reveal as="div" direction="left" y={24} duration={0.5} amount={0.2} className="lg:col-span-2">
           <Card className="p-6 sm:p-8">
             <h2 className="text-lg font-bold font-heading text-slate-900 dark:text-white mb-6">
               Coordonnées du voyageur
@@ -185,10 +186,10 @@ export default function CheckoutPage() {
               </button>
             </form>
           </Card>
-        </div>
+        </Reveal>
 
         {/* Stay Summary Card */}
-        <div className="lg:col-span-1">
+        <Reveal as="div" direction="right" y={24} duration={0.5} delay={0.1} amount={0.2} className="lg:col-span-1">
           <Card className="p-6 sticky top-24">
             <h2 className="text-base font-bold font-heading text-slate-900 dark:text-white mb-4">
               Récapitulatif du séjour
@@ -241,7 +242,7 @@ export default function CheckoutPage() {
               </div>
             </div>
           </Card>
-        </div>
+        </Reveal>
       </div>
     </div>
   )

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import { publicAPI, getApiErrorMessage } from '../../api/client'
 import { Card } from '../../components/ui/Card'
+import Reveal from '../../components/ui/Reveal'
+import { motion } from 'framer-motion'
 
 const MOBILE_PROVIDERS = [
   { value: 'ORANGE_MONEY', label: 'Orange Money' },
@@ -116,10 +118,20 @@ export default function PaymentPage() {
   if (success) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full text-center bg-white border border-slate-200 shadow-xl rounded-3xl p-8 dark:bg-slate-800/80 dark:border-slate-700">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-md w-full text-center bg-white border border-slate-200 shadow-xl rounded-3xl p-8 dark:bg-slate-800/80 dark:border-slate-700"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, type: 'spring', stiffness: 200, damping: 14 }}
+            className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6"
+          >
             <CheckCircle2 size={40} className="text-emerald-500 dark:text-emerald-400" />
-          </div>
+          </motion.div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-2">
             Paiement confirmé !
           </h1>
@@ -154,7 +166,7 @@ export default function PaymentPage() {
               Retour à l'accueil
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -178,6 +190,7 @@ export default function PaymentPage() {
 
       {/* Reservation summary card */}
       {reservation && (
+        <Reveal amount={0.4} duration={0.45}>
         <Card className="p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
             <div>
@@ -209,10 +222,11 @@ export default function PaymentPage() {
             </div>
           </div>
         </Card>
+        </Reveal>
       )}
 
       {/* Payment tabs */}
-      <div className="flex bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1.5 mb-6 border border-slate-200/80 dark:border-slate-700/60">
+      <Reveal amount={0.4} duration={0.45} delay={0.08} className="flex bg-slate-100 dark:bg-slate-800/80 rounded-2xl p-1.5 mb-6 border border-slate-200/80 dark:border-slate-700/60">
         {[
           ['card', <CreditCard size={16} />, 'Carte bancaire'],
           ['mobile', <Smartphone size={16} />, 'Mobile Money'],
@@ -230,7 +244,7 @@ export default function PaymentPage() {
             {label}
           </button>
         ))}
-      </div>
+      </Reveal>
 
       {error && (
         <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-300 text-sm font-medium mb-6">
@@ -240,6 +254,7 @@ export default function PaymentPage() {
       )}
 
       {/* Payment Form */}
+      <Reveal amount={0.3} duration={0.45} delay={0.14}>
       <Card className="p-6 sm:p-8">
         <form onSubmit={handlePay} className="space-y-4">
           {tab === 'card' ? (
@@ -361,6 +376,7 @@ export default function PaymentPage() {
           </button>
         </form>
       </Card>
+      </Reveal>
     </div>
   )
 }

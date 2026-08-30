@@ -100,6 +100,7 @@ export const usersAPI = {
 export const publicAPI = {
   getHotels: () => api.get('/api/public/hotels'),
   getAvailableRooms: (params) => api.get('/api/public/rooms/available', { params }),
+  submitRoomReview: (roomId, data) => api.post(`/api/public/rooms/${roomId}/reviews`, data),
   createReservation: (data) => api.post('/api/public/reservations', data),
   getReservation: (code) => api.get(`/api/public/reservations/${code}`),
   cancelReservation: (code) => api.post(`/api/public/reservations/${code}/cancel`),

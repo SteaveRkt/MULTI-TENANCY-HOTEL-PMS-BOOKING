@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Camera } from 'lucide-react'
 
 // Banques d'images d'hôtels Unsplash haute définition par catégorie
@@ -41,10 +41,31 @@ export const ROOM_GALLERIES = {
 export function getRoomImages(room) {
   if (!room) return ROOM_GALLERIES.STANDARD
 
-  // Si la chambre a des images personnalisées stockées
-  if (Array.isArray(room.images) && room.images.length > 0) {
-    return room.images
+  const parseUrls = (value) => {
+    if (!value) return []
+    if (Array.isArray(value)) {
+      return value
+        .flatMap((item) => String(item ?? '').split(/\n|,/))
+        .map((item) => item.trim())
+        .filter(Boolean)
+    }
+
+    return String(value)
+      .split(/\n|,/) 
+      .map((item) => item.trim())
+      .filter(Boolean)
   }
+
+  const uploadedImages = [...new Set(
+    [...parseUrls(room.image_urls), ...parseUrls(room.image_url)]
+      .map((url) => url.trim())
+      .filter(Boolean)
+  )]
+
+  if (uploadedImages.length > 0) {
+    return uploadedImages
+  }
+
   if (room.image_url) {
     return [room.image_url, ...ROOM_GALLERIES.STANDARD.slice(1)]
   }
@@ -68,6 +89,10 @@ export default function RoomImageSlider({ room, className = 'h-52' }) {
   const images = getRoomImages(room)
   const [currentIndex, setCurrentIndex] = useState(0)
   const touchStartX = useRef(null)
+
+  useEffect(() => {
+    setCurrentIndex((prev) => Math.min(prev, Math.max(images.length - 1, 0)))
+  }, [images.length])
 
   const roomType = room.room_type || room.type || 'Standard'
   const roomNumber = room.room_number || room.number
@@ -124,19 +149,7 @@ export default function RoomImageSlider({ room, className = 'h-52' }) {
       />
 
       {/* Dégradés pour lisibilité du texte */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-slate-950/40 pointer-events-none" />
-
-      {/* Badges du haut (Établissement & Type de chambre) */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
-        {hotelName ? (
-          <span className="px-2.5 py-1 rounded-full bg-slate-950/65 backdrop-blur-md text-white text-[11px] font-semibold border border-white/15 truncate max-w-[170px] shadow-sm">
-            {hotelName}
-          </span>
-        ) : <div />}
-        <span className="px-2.5 py-1 rounded-full bg-primary-600/90 backdrop-blur-md text-white text-[11px] font-bold border border-primary-400/30 shadow-sm uppercase tracking-wide">
-          {roomType}
-        </span>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-slate-950/10 pointer-events-none" />
 
       {/* Flèches de navigation gauche / droite */}
       {images.length > 1 && (
@@ -160,21 +173,15 @@ export default function RoomImageSlider({ room, className = 'h-52' }) {
         </>
       )}
 
-      {/* Titre Chambre + Compteur de photos */}
-      <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between z-10 pointer-events-none">
-        <div>
-          <span className="text-lg sm:text-xl font-black font-heading text-white drop-shadow-md block leading-tight">
-            Chambre {roomNumber}
-          </span>
-        </div>
-
-        {images.length > 1 && (
+      {/* Compteur de photos */}
+      {images.length > 1 && (
+        <div className="absolute bottom-3 right-3 z-10 pointer-events-none">
           <span className="px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-md text-white/90 text-[10px] font-bold border border-white/15 flex items-center gap-1 shadow-xs">
             <Camera size={11} />
             {currentIndex + 1} / {images.length}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Points de pagination (Dots) */}
       {images.length > 1 && (

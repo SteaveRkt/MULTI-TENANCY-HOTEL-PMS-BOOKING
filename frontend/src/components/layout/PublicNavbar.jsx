@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Building2, Search, LogIn, Menu, X, Compass, ShieldCheck, BedDouble } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import ThemeToggle from '../ui/ThemeToggle'
 
 export default function PublicNavbar() {
@@ -73,8 +74,16 @@ export default function PublicNavbar() {
       </div>
 
       {/* Mobile Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 pt-3 pb-5 space-y-3 transition-colors shadow-lg">
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="md:hidden overflow-hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg"
+          >
+          <div className="px-4 pt-3 pb-5 space-y-3">
           <a
             href="#destinations"
             onClick={() => setMobileMenuOpen(false)}
@@ -105,8 +114,10 @@ export default function PublicNavbar() {
               Espace Hôtelier
             </Link>
           </div>
-        </div>
-      )}
+          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

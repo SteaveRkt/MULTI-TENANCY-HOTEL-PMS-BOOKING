@@ -7,6 +7,7 @@ from app.models.room import Room
 from app.models.user import User
 from app.schemas.room import RoomCreate, RoomResponse,RoomUpdate
 from app.models.reservation import Reservation
+from app.api.routes.public import normalize_image_urls
 import uuid
 
 
@@ -26,6 +27,12 @@ def create_room(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("ADMIN")),
 ):
+    image_urls = normalize_image_urls(
+        data.image_urls,
+        data.image_url,
+    )
+    combined_image_url = ", ".join(image_urls) if image_urls else None
+
     room = Room(
         tenant_id=current_user.tenant_id,
         number=data.number,
@@ -33,8 +40,11 @@ def create_room(
         floor=data.floor,
         capacity=data.capacity,
         price_per_night=data.price_per_night,
+        rating=data.rating,
+        reviews_count=data.reviews_count,
         status=data.status,
         description=data.description,
+        image_url=combined_image_url,
     )
 
     db.add(room)
@@ -181,6 +191,15 @@ def update_room(
         )
 
     update_data = data.model_dump(exclude_unset=True)
+
+    if "image_urls" in update_data or "image_url" in update_data:
+        image_urls = normalize_image_urls(
+            update_data.get("image_urls"),
+            update_data.get("image_url"),
+        )
+        room.image_url = ", ".join(image_urls) if image_urls else None
+        update_data.pop("image_urls", None)
+        update_data.pop("image_url", None)
 
     for field, value in update_data.items():
         setattr(room, field, value)

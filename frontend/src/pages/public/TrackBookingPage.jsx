@@ -13,6 +13,7 @@ import {
 import { publicAPI, getApiErrorMessage } from '../../api/client'
 import Badge from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function TrackBookingPage() {
   const [code, setCode] = useState('')
@@ -103,17 +104,28 @@ export default function TrackBookingPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 sm:py-16">
-      <div className="text-center mb-8 sm:mb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="text-center mb-8 sm:mb-10"
+      >
         <h1 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 dark:text-white mb-2 tracking-tight">
           Suivre ma réservation
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
           Saisissez votre code unique pour consulter les détails ou gérer votre séjour.
         </p>
-      </div>
+      </motion.div>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 sm:gap-3 mb-8">
+      <motion.form
+        onSubmit={handleSearch}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        className="flex gap-2 sm:gap-3 mb-8"
+      >
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
@@ -128,7 +140,7 @@ export default function TrackBookingPage() {
           {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
           Rechercher
         </button>
-      </form>
+      </motion.form>
 
       {/* Error alert */}
       {error && (
@@ -147,8 +159,16 @@ export default function TrackBookingPage() {
       )}
 
       {/* Reservation Result Card */}
-      {reservation && (
-        <Card className="overflow-hidden shadow-card">
+      <AnimatePresence mode="wait">
+        {reservation && (
+          <motion.div
+            key={reservation.reservation_code ?? reservation.code}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+          <Card className="overflow-hidden shadow-card">
           {/* Header Banner */}
           <div className="bg-slate-50 dark:bg-slate-850 border-b border-slate-100 dark:border-slate-700/60 p-5 sm:p-6">
             <div className="flex items-center justify-between">
@@ -272,7 +292,9 @@ export default function TrackBookingPage() {
             </div>
           </div>
         </Card>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Empty State */}
       {!reservation && !loading && !error && (
