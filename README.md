@@ -1,150 +1,126 @@
-# 🏨 Multi-Tenancy Hotel Management SaaS
+# Multi-Tenancy Hotel Management SaaS
 
-Plateforme SaaS moderne et complète de gestion hôtelière multi-établissements (**Multi-Tenancy**), combinant un back-office pour les équipes hôtelières et un portail de réservation en ligne pour les clients.
-
----
-
-## ✨ Fonctionnalités Principales
-
-### 🏢 Architecture Multi-Tenancy & Sécurité
-- **Isolation des données par hôtel** : chaque établissement accède uniquement à ses propres chambres, réservations, clients et données financières.
-- **Authentification & Rôles** : tokens JWT sécurisés avec contrôle d'accès basé sur les rôles (`ADMIN`, `RECEPTIONIST`).
-
-### 📊 Back-Office Administratif
-- **Tableau de Bord & KPIs** : suivi du chiffre d'affaires (en Ariary / Ar), du taux d'occupation, des arrivées/départs du jour et graphiques mensuels.
-- **Rack des Chambres par Date** : vue interactive de l'état du parc (Libre, Réservé, Occupé, Maintenance) avec navigation jour par jour.
-- **Recherche de Séjour sans conflit** : moteur de recherche de disponibilités par période de séjour.
-- **Gestion des Réservations** :
-  - Création rapide au comptoir avec ajout instantané d'un nouveau client dans le même formulaire.
-  - Cycle de vie complet : *En attente*, *Confirmée*, *Check-in*, *Check-out*, *Annulée*.
-- **Paiements & Facturation** :
-  - Encaissements multi-modes : Espèces, Mobile Money (MVola, Orange Money, Airtel Money) et Carte Bancaire.
-  - Génération automatique et téléchargement de **factures PDF professionnelles**.
-- **Gestion des Chambres, Clients et Équipe (Staff)**.
-
-### 🌐 Portail Public de Réservation
-- Découverte des hôtels partenaires et de leurs chambres.
-- Recherche de chambres avec filtres de dates, capacité, type et budget en Ariary (de 5 000 Ar à 300 000 Ar).
-- Réservation en ligne en direct avec code unique de suivi.
+A modern, comprehensive multi-property (**Multi-Tenancy**) hotel management SaaS platform, combining a powerful back-office for hotel staff and an online booking portal for guests.
 
 ---
 
-## 🛠️ Stack Technique
+## Key Features
+
+### Multi-Tenancy Architecture & Security
+- **Data Isolation per Hotel**: Each property can only access its own rooms, reservations, customers, and financial data.
+- **Authentication & Roles**: Secure JWT tokens with role-based access control (`ADMIN`, `RECEPTIONIST`).
+
+### Administrative Back-Office
+- **Dashboard & KPIs**: Track revenue (in Ariary / Ar), occupancy rate, today's check-ins/check-outs, and view monthly analytics charts.
+- **Room Status Rack by Date**: Interactive visual grid showing room status (Available, Reserved, Occupied, Maintenance) with day-by-day navigation.
+- **Conflict-Free Search**: Search engine to look up availability for any given stay period without overbooking risk.
+- **Reservation Management**:
+  - Quick front-desk booking creation with instant new customer registration within the same form.
+  - Full lifecycle management: *Pending*, *Confirmed*, *Check-in*, *Check-out*, *Cancelled*.
+- **Payments & Invoicing**:
+  - Multi-mode payment tracking: Cash, Mobile Money (MVola, Orange Money, Airtel Money), and Credit/Debit Card.
+  - Automatic generation and download of **professional PDF invoices**.
+- **Management Modules**: Dedicated interfaces for Rooms, Customers, and Staff members.
+
+### Public Booking Portal
+- Discover partner hotels and explore their available rooms.
+- Advanced room search with filters for dates, capacity, type, and budget in Ariary (ranging from 5,000 Ar to 300 000 Ar).
+- Real-time direct online booking with a unique tracking code.
+
+---
+
+## Tech Stack
 
 ### Backend
-- **Framework** : [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11+)
-- **ORM & Migrations** : [SQLAlchemy 2.0](https://www.sqlalchemy.org/) & [Alembic](https://alembic.sqlalchemy.org/)
-- **Base de données** : [PostgreSQL](https://www.postgresql.org/) (avec fallback SQLite local)
-- **Génération PDF** : [ReportLab](https://www.reportlab.com/)
-- **Validation** : [Pydantic v2](https://docs.pydantic.dev/)
+- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11+)
+- **ORM & Migrations**: [SQLAlchemy 2.0](https://www.sqlalchemy.org/) & [Alembic](https://alembic.sqlalchemy.org/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) (with local SQLite fallback)
+- **PDF Generation**: [ReportLab](https://www.reportlab.com/)
+- **Validation**: [Pydantic v2](https://docs.pydantic.dev/)
 
 ### Frontend
-- **Framework** : [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Styling** : [Tailwind CSS](https://tailwindcss.com/)
-- **Icônes & Graphiques** : [Lucide React](https://lucide.dev/) & [Recharts](https://recharts.org/)
-- **Routage & HTTP** : [React Router v6](https://reactrouter.com/) & [Axios](https://axios-http.com/)
+- **Framework**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons & Charts**: [Lucide React](https://lucide.dev/) & [Recharts](https://recharts.org/)
+- **Routing & HTTP**: [React Router v6](https://reactrouter.com/) & [Axios](https://axios-http.com/)
 
 ---
 
-## 📁 Structure du Projet
+## Project Structure
 
 ```text
 MULTI TENANCY HOTEL/
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # Routes API (auth, rooms, reservations, dashboard, public, etc.)
-│   │   ├── core/         # Configuration, base de données et sécurité JWT
-│   │   ├── models/       # Modèles SQLAlchemy (Tenant, User, Room, Customer, Reservation, Payment)
-│   │   ├── schemas/      # Schémas Pydantic de validation
-│   │   └── main.py       # Point d'entrée FastAPI & configuration CORS
-│   ├── alembic/          # Scripts de migration BDD
-│   ├── render.yaml       # Configuration de déploiement Render
-│   ├── Procfile          # Commande de démarrage Render
-│   ├── requirements.txt  # Dépendances Python
-│   └── .env.example      # Modèle des variables d'environnement backend
+│   │   ├── api/          # API Routes (auth, rooms, reservations, dashboard, public, etc.)
+│   │   ├── core/         # Configuration, database connection, and JWT security
+│   │   ├── models/       # SQLAlchemy Models (Tenant, User, Room, Customer, Reservation, Payment)
+│   │   ├── schemas/      # Pydantic validation schemas
+│   │   └── main.py       # FastAPI entry point & CORS configuration
+│   ├── alembic/          # DB migration scripts
+│   ├── render.yaml       # Render deployment configuration
+│   ├── Procfile          # Render startup command
+│   ├── requirements.txt  # Python dependencies
+│   └── .env.example      # Backend environment variables template
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── api/          # Client API Axios centralisé
-│   │   ├── components/   # Composants UI réutilisables (Button, Modal, Card, Badge, etc.)
-│   │   ├── context/      # Contexte d'authentification React
-│   │   ├── pages/        # Vues Admin (Dashboard, Rack, Réservations, etc.) et Publiques
-│   │   ├── App.jsx       # Configuration des routes
-│   │   └── main.jsx      # Point d'entrée React
-│   ├── vercel.json       # Configuration de réécriture SPA pour Vercel
-│   ├── package.json      # Scripts et dépendances NPM
-│   └── .env.example      # Modèle des variables d'environnement frontend
+│   │   ├── api/          # Centralized Axios API client
+│   │   ├── components/   # Reusable UI components (Button, Modal, Card, Badge, etc.)
+│   │   ├── context/      # React authentication context
+│   │   ├── pages/        # Admin Views (Dashboard, Rack, Reservations, etc.) and Public Views
+│   │   ├── App.jsx       # Route configuration
+│   │   └── main.jsx      # React entry point
+│   ├── vercel.json       # Vercel SPA rewrite configuration
+│   ├── package.json      # NPM scripts and dependencies
+│   └── .env.example      # Frontend environment variables template
 │
-├── .gitignore            # Règles d'exclusion Git globales
+├── .gitignore            # Global Git exclusion rules
 └── README.md
 ```
 
 ---
 
-## 🚀 Installation & Démarrage Local
+## Installation & Local Setup
 
-### 1. Cloner le projet
+### 1. Clone the project
 ```bash
-git clone <url-du-repo>
+git clone https://github.com/SteaveRkt/MULTI-TENANCY-HOTEL-PMS-BOOKING.git
 cd "MULTI TENANCY HOTEL"
 ```
 
-### 2. Démarrer le Backend
+### 2. Start the Backend
 ```bash
 cd backend
 
-# Créer et activer l'environnement virtuel
+# Create and activate virtual environment
 python3 -m venv .venv
-source .venv/bin/activate  # Sur Windows: .venv\Scripts\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Installer les dépendances
+# Install dependencies
 pip install -r requirements.txt
 
-# Configurer l'environnement
+# Set up the environment variables
 cp .env.example .env
 
-# Lancer le serveur FastAPI
+# Run the FastAPI server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
-> L'API sera accessible sur `http://localhost:8000` et la documentation Swagger sur `http://localhost:8000/docs`.
+> The API will be accessible at `http://localhost:8000` and the Swagger documentation at `http://localhost:8000/docs`.
 
-### 3. Démarrer le Frontend
+### 3. Start the Frontend
 ```bash
 cd ../frontend
 
-# Installer les dépendances
+# Install dependencies
 npm install
 
-# Configurer l'environnement
+# Set up the environment variables
 cp .env.example .env
 
-# Lancer le serveur de développement Vite
+# Run the Vite development server
 npm run dev
 ```
-> L'application sera accessible sur `http://localhost:5173`.
+> The application will be accessible at `http://localhost:5173`.
 
 ---
-
-## ☁️ Déploiement en Production
-
-| Service | Composant | Fichiers de configuration |
-|---|---|---|
-| **Render** | Backend FastAPI + Base PostgreSQL | [`backend/render.yaml`](backend/render.yaml), [`backend/Procfile`](backend/Procfile) |
-| **Vercel** | Frontend React SPA | [`frontend/vercel.json`](frontend/vercel.json) |
-
-### Variables d'environnement de Production
-
-#### Backend (Render)
-- `DATABASE_URL` : URL de connexion PostgreSQL fournie par Render.
-- `JWT_SECRET` : Clé secrète robuste pour signer les tokens.
-- `JWT_ALGORITHM` : `HS256`
-- `ACCESS_TOKEN_EXPIRE_MINUTES` : `60`
-- `FRONTEND_URL` : URL Vercel du client (`https://votre-app.vercel.app`).
-
-#### Frontend (Vercel)
-- `VITE_API_URL` : URL de votre backend Render (`https://votre-api.onrender.com`).
-
----
-
-## 📄 Licence
-Ce projet est sous licence MIT - voir le fichier LICENSE pour plus d'informations.
